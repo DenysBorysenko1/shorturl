@@ -1,3 +1,3 @@
-module github.com/DenysBorysenko1/shorturl
+module shorturl
 
 go 1.24.12

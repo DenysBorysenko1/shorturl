@@ -2,7 +2,8 @@ package main
 
 import (
 	"net/http"
-	"github.com/DenysBorysenko1/shorturl/internal/handler"
+
+	"shorturl/internal/handler"
 )
 
 func main() {
