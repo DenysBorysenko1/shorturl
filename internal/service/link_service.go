@@ -36,7 +36,7 @@ func (linkService *LinkService) Create(url string) (string, error) {
 }
 
 func (linkService *LinkService) Get(id string) (string, error) {
-	data, err := linkService.repository.GetById(id)
+	data, err := linkService.repository.GetByID(id)
 	if err != nil {
 		fmt.Println(err)
 		return "", errors.New("not found")

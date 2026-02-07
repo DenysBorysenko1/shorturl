@@ -34,7 +34,7 @@ func Generate(service *service.LinkService) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(config.AppBaseUrl + "/" + id))
+		w.Write([]byte(config.AppBaseURL + "/" + id))
 	}
 
 }

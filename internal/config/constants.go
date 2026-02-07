@@ -1,4 +1,4 @@
 package config
 
 const AppPort = "8080"
-const AppBaseUrl = "http://localhost:" + AppPort
+const AppBaseURL = "http://localhost:" + AppPort

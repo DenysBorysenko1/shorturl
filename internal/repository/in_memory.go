@@ -25,7 +25,7 @@ func (repository *InMemoryRepository[T]) Create(entity T) error {
 	return nil
 }
 
-func (repository *InMemoryRepository[T]) GetById(id string) (T, error) {
+func (repository *InMemoryRepository[T]) GetByID(id string) (T, error) {
 	repository.mu.RLock()
 	defer repository.mu.RUnlock()
 
