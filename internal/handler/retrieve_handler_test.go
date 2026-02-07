@@ -97,6 +97,7 @@ func TestRetrieve(t *testing.T) {
 			mux.ServeHTTP(recorder, request)
 
 			result := recorder.Result()
+			defer result.Body.Close()
 
 			assert.Equal(t, test.want.status, result.StatusCode)
 			assert.Contains(t, result.Header.Get("Location"), test.want.location)

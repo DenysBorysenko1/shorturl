@@ -104,6 +104,7 @@ func TestGenerate(t *testing.T) {
 			h(w, request)
 
 			result := w.Result()
+			defer result.Body.Close()
 			data, err := io.ReadAll(result.Body)
 			require.NoError(t, err)
 
