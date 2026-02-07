@@ -26,6 +26,7 @@ func TestGenerate(t *testing.T) {
 	tests := []struct {
 		name       string
 		id         string
+		method     string
 		path       string
 		urlParam   string
 		createFunc func(url string) (string, error)
@@ -33,6 +34,7 @@ func TestGenerate(t *testing.T) {
 	}{
 		{
 			name:     "positive",
+			method:   "POST",
 			path:     "/",
 			id:       "123",
 			urlParam: "https://yandex.ru",
@@ -43,7 +45,20 @@ func TestGenerate(t *testing.T) {
 			},
 		},
 		{
+			name:     "incorrect method",
+			method:   "GET",
+			path:     "/",
+			urlParam: "",
+			id:       "",
+			want: want{
+				status:      http.StatusMethodNotAllowed,
+				contentType: "text/plain",
+				response:    "Only POST\n",
+			},
+		},
+		{
 			name:     "not pass param",
+			method:   "POST",
 			path:     "/",
 			urlParam: "",
 			id:       "",
@@ -55,6 +70,7 @@ func TestGenerate(t *testing.T) {
 		},
 		{
 			name:     "service error",
+			method:   "POST",
 			path:     "/",
 			urlParam: "https://yandex.ru",
 			id:       "",
@@ -81,7 +97,7 @@ func TestGenerate(t *testing.T) {
 			}
 
 			body := strings.NewReader(test.urlParam)
-			request := httptest.NewRequest(http.MethodPost, test.path, body)
+			request := httptest.NewRequest(test.method, test.path, body)
 			w := httptest.NewRecorder()
 			h := http.HandlerFunc(handler.Generate(service))
 
