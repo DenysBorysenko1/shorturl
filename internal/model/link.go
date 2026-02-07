@@ -1,6 +1,6 @@
 package model
 
 type Link struct {
-	ID string
+	BaseEntity
 	URL string
 }

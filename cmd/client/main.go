@@ -1,4 +1,4 @@
-package client
+package main
 
 import (
 	"bufio"
@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	endpoint := "htt://localhost:8080/"
+	endpoint := "http://localhost:8080/"
 
 	data := url.Values{}
 
