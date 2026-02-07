@@ -9,6 +9,11 @@ import (
 	"shorturl/internal/repository"
 )
 
+type LinkServiceInterface interface {
+	Create(url string) (string, error)
+	Get(id string) (string, error)
+}
+
 type LinkService struct {
 	repository repository.Repository[model.Link]
 }

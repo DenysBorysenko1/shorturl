@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func Generate(service *service.LinkService) http.HandlerFunc {
+func Generate(service service.LinkServiceInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Only POST", http.StatusMethodNotAllowed)
@@ -30,10 +30,11 @@ func Generate(service *service.LinkService) http.HandlerFunc {
 		id, err := service.Create(url)
 		if err != nil {
 			http.Error(w, "Error while creating", http.StatusInternalServerError)
+			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(config.AppBaseURL + "/" + id))
 	}
 
