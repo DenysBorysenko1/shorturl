@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"shorturl/internal/config"
 	"shorturl/internal/service"
 	"strings"
 )
 
-func Generate(service service.LinkServiceInterface) http.HandlerFunc {
+func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Only POST", http.StatusMethodNotAllowed)
@@ -27,7 +26,7 @@ func Generate(service service.LinkServiceInterface) http.HandlerFunc {
 			return
 		}
 
-		id, err := service.Create(url)
+		id, err := svc.Create(url)
 		if err != nil {
 			http.Error(w, "Error while creating", http.StatusInternalServerError)
 			return
@@ -35,7 +34,7 @@ func Generate(service service.LinkServiceInterface) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(config.AppBaseURL + "/" + id))
+		w.Write([]byte(baseURL + "/" + id))
 	}
 
 }

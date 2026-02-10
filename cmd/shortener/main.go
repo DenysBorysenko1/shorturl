@@ -13,16 +13,18 @@ import (
 )
 
 func main() {
+	config.Load()
+
 	r := chi.NewRouter()
 
 	inMemoryRepository := repository.NewInMemoryRepository[model.Link]()
 	linkService := service.NewLinkService(inMemoryRepository)
 
-	r.Post("/", handler.Generate(linkService))
+	r.Post("/", handler.Generate(linkService, config.Cfg.BaseURL))
 	r.Get("/{id}", handler.Retrieve(linkService))
 
-	fmt.Println("Starting http://localhost:" + string(config.AppPort))
-	if err := http.ListenAndServe(":"+string(config.AppPort), r); err != nil {
+	fmt.Println("Starting server at", config.Cfg.ServerAddress)
+	if err := http.ListenAndServe(config.Cfg.ServerAddress, r); err != nil {
 		panic(err)
 	}
 }

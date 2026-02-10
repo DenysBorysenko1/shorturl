@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"shorturl/internal/config"
 	"shorturl/internal/handler"
 	"shorturl/internal/service/mocks"
 	"strings"
@@ -41,7 +40,7 @@ func TestGenerate(t *testing.T) {
 			want: want{
 				status:      http.StatusCreated,
 				contentType: "text/plain",
-				response:    config.AppBaseURL + "/123",
+				response:    "http://localhost:8080/123",
 			},
 		},
 		{
@@ -99,7 +98,7 @@ func TestGenerate(t *testing.T) {
 			body := strings.NewReader(test.urlParam)
 			request := httptest.NewRequest(test.method, test.path, body)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.Generate(service))
+			h := http.HandlerFunc(handler.Generate(service, "http://localhost:8080"))
 
 			h(w, request)
 
