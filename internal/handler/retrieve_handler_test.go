@@ -8,6 +8,7 @@ import (
 	"shorturl/internal/service/mocks"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -90,11 +91,11 @@ func TestRetrieve(t *testing.T) {
 					return test.want.location, nil
 				},
 			}
-			mux := http.NewServeMux()
-			mux.HandleFunc("GET /{id}", handler.Retrieve(service))
+			r := chi.NewRouter()
+			r.Get("/{id}", handler.Retrieve(service))
 			request := httptest.NewRequest(test.method, "http://localhost"+test.path, nil)
 			recorder := httptest.NewRecorder()
-			mux.ServeHTTP(recorder, request)
+			r.ServeHTTP(recorder, request)
 
 			result := recorder.Result()
 			defer result.Body.Close()

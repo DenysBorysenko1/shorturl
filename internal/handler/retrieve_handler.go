@@ -3,15 +3,13 @@ package handler
 import (
 	"net/http"
 	"shorturl/internal/service"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func Retrieve(service service.LinkServiceInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Only GET", http.StatusMethodNotAllowed)
-			return
-		}
-		id := r.PathValue("id")
+		id := chi.URLParam(r, "id")
 		if id == "" {
 			http.NotFound(w, r)
 			return

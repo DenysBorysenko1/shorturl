@@ -8,19 +8,21 @@ import (
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
 	"shorturl/internal/service"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
 	inMemoryRepository := repository.NewInMemoryRepository[model.Link]()
 	linkService := service.NewLinkService(inMemoryRepository)
 
-	mux.HandleFunc("/", handler.Generate(linkService))
-	mux.HandleFunc("/{id}", handler.Retrieve(linkService))
+	r.Post("/", handler.Generate(linkService))
+	r.Get("/{id}", handler.Retrieve(linkService))
 
 	fmt.Println("Starting http://localhost:" + string(config.AppPort))
-	if err := http.ListenAndServe(":"+string(config.AppPort), mux); err != nil {
+	if err := http.ListenAndServe(":"+string(config.AppPort), r); err != nil {
 		panic(err)
 	}
 }
