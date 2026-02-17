@@ -9,6 +9,7 @@ import (
 )
 
 func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc {
+	
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Only POST", http.StatusMethodNotAllowed)

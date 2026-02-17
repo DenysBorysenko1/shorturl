@@ -23,6 +23,8 @@ func main() {
 	r.Post("/", handler.Generate(linkService, config.Cfg.BaseURL))
 	r.Get("/{id}", handler.Retrieve(linkService))
 
+
+	fmt.Println(config.Cfg.BaseURL)
 	fmt.Println("Starting server at", config.Cfg.ServerAddress)
 	if err := http.ListenAndServe(config.Cfg.ServerAddress, r); err != nil {
 		panic(err)
