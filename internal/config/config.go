@@ -23,4 +23,6 @@ func Load() {
 	if Cfg.BaseURL == "" {
 		flag.StringVar(&Cfg.BaseURL, "b", "http://localhost:8080", "Base URL for shortened links")
 	}
+
+	flag.Parse()
 }
