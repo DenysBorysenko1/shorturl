@@ -10,6 +10,7 @@ import (
 type Config struct {
 	ServerAddress string `env:"SERVER_ADDRESS"`
 	BaseURL       string `env:"BASE_URL"`
+	LogLevel      string `env:"LOG_LEVEL"`
 }
 
 var Cfg Config
@@ -26,6 +27,11 @@ func Load() {
 
 	if strings.TrimSpace(Cfg.BaseURL) == "" {
 		flag.StringVar(&Cfg.BaseURL, "b", "http://localhost:8080", "Base URL for shortened links")
+		flagsRegistered = true
+	}
+
+	if strings.TrimSpace(Cfg.LogLevel) == "" {
+		flag.StringVar(&Cfg.LogLevel, "l", "info", "Log level")
 		flagsRegistered = true
 	}
 

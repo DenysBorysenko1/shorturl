@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"shorturl/internal/config"
 	"shorturl/internal/handler"
+	"shorturl/internal/logger"
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
 	"shorturl/internal/service"
@@ -14,19 +15,19 @@ import (
 
 func main() {
 	config.Load()
+	logger.Initialize(config.Cfg.LogLevel)
 
-	r := chi.NewRouter()
+	router := chi.NewRouter()
+	router.Use(logger.WithLogging)
 
 	inMemoryRepository := repository.NewInMemoryRepository[model.Link]()
 	linkService := service.NewLinkService(inMemoryRepository)
 
-	r.Post("/", handler.Generate(linkService, config.Cfg.BaseURL))
-	r.Get("/{id}", handler.Retrieve(linkService))
+	router.Post("/", handler.Generate(linkService, config.Cfg.BaseURL))
+	router.Get("/{id}", handler.Retrieve(linkService))
 
-
-	fmt.Println(config.Cfg.BaseURL)
 	fmt.Println("Starting server at", config.Cfg.ServerAddress)
-	if err := http.ListenAndServe(config.Cfg.ServerAddress, r); err != nil {
+	if err := http.ListenAndServe(config.Cfg.ServerAddress, router); err != nil {
 		panic(err)
 	}
 }
