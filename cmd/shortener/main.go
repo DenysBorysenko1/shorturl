@@ -24,6 +24,7 @@ func main() {
 	linkService := service.NewLinkService(inMemoryRepository)
 
 	router.Post("/", handler.Generate(linkService, config.Cfg.BaseURL))
+	router.Post("/api/shorten", handler.GenerateJSON(linkService, config.Cfg.BaseURL))
 	router.Get("/{id}", handler.Retrieve(linkService))
 
 	fmt.Println("Starting server at", config.Cfg.ServerAddress)
