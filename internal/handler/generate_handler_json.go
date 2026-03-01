@@ -56,10 +56,10 @@ func GenerateJSON(svc service.LinkServiceInterface, baseURL string) http.Handler
 			return
 		}
 
-		resultUrl := baseURL + "/" + id
+		resultURL := baseURL + "/" + id
 
 		resp, err := json.Marshal(Response{
-			Result: resultUrl,
+			Result: resultURL,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
