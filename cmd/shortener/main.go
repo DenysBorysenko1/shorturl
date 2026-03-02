@@ -6,6 +6,7 @@ import (
 	"shorturl/internal/config"
 	"shorturl/internal/handler"
 	"shorturl/internal/logger"
+	"shorturl/internal/middleware"
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
 	"shorturl/internal/service"
@@ -19,6 +20,7 @@ func main() {
 
 	router := chi.NewRouter()
 	router.Use(logger.WithLogging)
+	router.Use(middleware.WithCompress)
 
 	inMemoryRepository := repository.NewInMemoryRepository[model.Link]()
 	linkService := service.NewLinkService(inMemoryRepository)
