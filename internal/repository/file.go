@@ -17,6 +17,12 @@ func NewFileRepository[T Entity](filename string) (*FileRepository[T], error) {
 		filename: filename,
 	}
 
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		if err := os.WriteFile(filename, []byte("[]"), 0666); err != nil {
+			return nil, err
+		}
+	}
+
 	return repo, nil
 }
 
