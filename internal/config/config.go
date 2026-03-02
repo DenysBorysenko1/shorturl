@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	ServerAddress string `env:"SERVER_ADDRESS"`
-	BaseURL       string `env:"BASE_URL"`
-	LogLevel      string `env:"LOG_LEVEL" envDefault:"info"`
+	ServerAddress  string `env:"SERVER_ADDRESS"`
+	BaseURL        string `env:"BASE_URL"`
+	FileStorageURL string `env:"FILE_STORAGE_PATH"`
+	LogLevel       string `env:"LOG_LEVEL" envDefault:"info"`
 }
 
 var Cfg Config
@@ -27,6 +28,11 @@ func Load() {
 
 	if strings.TrimSpace(Cfg.BaseURL) == "" {
 		flag.StringVar(&Cfg.BaseURL, "b", "http://localhost:8080", "Base URL for shortened links")
+		flagsRegistered = true
+	}
+
+	if strings.TrimSpace(Cfg.FileStorageURL) == "" {
+		flag.StringVar(&Cfg.FileStorageURL, "f", "./links.json", "Path to data file")
 		flagsRegistered = true
 	}
 

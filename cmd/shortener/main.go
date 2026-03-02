@@ -22,8 +22,11 @@ func main() {
 	router.Use(logger.WithLogging)
 	router.Use(middleware.WithCompress)
 
-	inMemoryRepository := repository.NewInMemoryRepository[model.Link]()
-	linkService := service.NewLinkService(inMemoryRepository)
+	fileRepository, err := repository.NewFileRepository[model.Link](config.Cfg.FileStorageURL)
+	if err != nil {
+		panic(err)
+	}
+	linkService := service.NewLinkService(fileRepository)
 
 	router.Post("/", handler.Generate(linkService, config.Cfg.BaseURL))
 	router.Post("/api/shorten", handler.GenerateJSON(linkService, config.Cfg.BaseURL))
