@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	_ "modernc.org/sqlite"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func Ping(log *zap.Logger, databasePath string) http.HandlerFunc {
+func Ping(log *zap.Logger, databaseDSN string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("sqlite", databasePath)
+		db, err := sql.Open("pgx", databaseDSN)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		defer db.Close()
@@ -22,9 +22,8 @@ func Ping(log *zap.Logger, databasePath string) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 1*time.Second)
 		defer cancel()
 
-		err = db.PingContext(ctx)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err := db.PingContext(ctx); err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
