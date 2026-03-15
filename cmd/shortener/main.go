@@ -35,6 +35,6 @@ func main() {
 
 	logger.Log.Info("Starting server at", zap.String("address", config.Cfg.ServerAddress))
 	if err := http.ListenAndServe(config.Cfg.ServerAddress, router); err != nil {
-		panic(err)
+		logger.Log.Fatal("Server stopped with error", zap.Error(err))
 	}
 }
