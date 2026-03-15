@@ -18,6 +18,8 @@ import (
 
 func TestGenerateJSON(t *testing.T) {
 
+	config.Load()
+
 	type want struct {
 		status        int
 		contentType   string
