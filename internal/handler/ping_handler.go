@@ -4,15 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"shorturl/internal/config"
 	"time"
 
-	"go.uber.org/zap"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"go.uber.org/zap"
 )
 
-func Ping(log *zap.Logger, databaseDSN string) http.HandlerFunc {
+func Ping(log *zap.Logger, config config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("pgx", databaseDSN)
+		db, err := sql.Open("pgx", config.DatabaseDSN)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return

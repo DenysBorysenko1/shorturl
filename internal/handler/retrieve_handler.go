@@ -18,7 +18,7 @@ func Retrieve(service service.LinkServiceInterface) http.HandlerFunc {
 		url, err := service.Get(id)
 
 		if err != nil {
-			http.Error(w, "Error while creating", http.StatusInternalServerError)
+			http.Error(w, "Error while retrieving", http.StatusInternalServerError)
 			return
 		}
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)

@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"shorturl/internal/config"
 	"shorturl/internal/service"
 	"strings"
 )
@@ -19,7 +20,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func GenerateJSON(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc {
+func GenerateJSON(svc service.LinkServiceInterface, config config.Config) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
@@ -56,7 +57,7 @@ func GenerateJSON(svc service.LinkServiceInterface, baseURL string) http.Handler
 			return
 		}
 
-		resultURL := baseURL + "/" + id
+		resultURL := config.BaseURL + "/" + id
 
 		resp, err := json.Marshal(Response{
 			Result: resultURL,

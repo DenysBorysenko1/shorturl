@@ -5,8 +5,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"shorturl/internal/logger"
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
+
+	"go.uber.org/zap"
 )
 
 type LinkServiceInterface interface {
@@ -16,10 +19,11 @@ type LinkServiceInterface interface {
 
 type LinkService struct {
 	repository repository.Repository[model.Link]
+	logger     zap.Logger
 }
 
-func NewLinkService(repository repository.Repository[model.Link]) *LinkService {
-	return &LinkService{repository: repository}
+func NewLinkService(repository repository.Repository[model.Link], logger zap.Logger) *LinkService {
+	return &LinkService{repository: repository, logger: logger}
 }
 
 func (linkService *LinkService) Create(url string) (string, error) {
@@ -34,6 +38,8 @@ func (linkService *LinkService) Create(url string) (string, error) {
 		URL:        url,
 	}
 	if err := linkService.repository.Create(link); err != nil {
+		logger.Log.Error(err.Error())
+
 		return "", fmt.Errorf("create link: %w", err)
 	}
 
@@ -43,7 +49,8 @@ func (linkService *LinkService) Create(url string) (string, error) {
 func (linkService *LinkService) Get(id string) (string, error) {
 	data, err := linkService.repository.GetByID(id)
 	if err != nil {
-		fmt.Println(err)
+		logger.Log.Error(err.Error())
+
 		return "", errors.New("not found")
 	}
 

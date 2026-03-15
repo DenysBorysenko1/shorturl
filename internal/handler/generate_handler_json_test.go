@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"shorturl/internal/config"
 	"shorturl/internal/handler"
 	"shorturl/internal/service/mocks"
 	"testing"
@@ -118,7 +119,7 @@ func TestGenerateJSON(t *testing.T) {
 
 			request := httptest.NewRequest(test.method, test.path, bytes.NewReader(jsonRequest))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GenerateJSON(service, "http://localhost:8080"))
+			h := http.HandlerFunc(handler.GenerateJSON(service, config.Cfg))
 
 			h(w, request)
 
