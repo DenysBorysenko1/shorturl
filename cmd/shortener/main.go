@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"shorturl/internal/config"
+	dbpkg "shorturl/internal/db"
 	"shorturl/internal/handler"
 	"shorturl/internal/logger"
 	"shorturl/internal/middleware"
@@ -40,7 +41,10 @@ func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Lin
 		}
 		if err = db.Ping(); err != nil {
 			logger.Fatal("Failed to ping database", zap.Error(err))
+		}
 
+		if err := dbpkg.RunMigrations(db); err != nil {
+			logger.Fatal("Failed to run migrations", zap.Error(err))
 		}
 
 		logger.Info("While initialize link repository POSTGRES source had chosen")
