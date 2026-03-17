@@ -16,12 +16,17 @@ type Config struct {
 
 var Cfg Config
 
-func Load() {
+func init() {
 	flag.StringVar(&Cfg.ServerAddress, "a", "localhost:8080", "HTTP server address")
 	flag.StringVar(&Cfg.BaseURL, "b", "http://localhost:8080", "Base URL for shortened links")
 	flag.StringVar(&Cfg.FileStorageURL, "f", "", "Path to data file")
 	flag.StringVar(&Cfg.DatabaseDSN, "d", "", "Database connection path")
+}
 
-	flag.Parse()
-	env.Parse(&Cfg)
+func Load() {
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
+	_ = env.Parse(&Cfg)
 }
