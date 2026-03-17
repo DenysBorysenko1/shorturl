@@ -24,5 +24,6 @@ vendor/
 
 docker/volumes/*
 .env 
+cover.html
 
 links.json
