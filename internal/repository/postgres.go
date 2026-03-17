@@ -16,12 +16,47 @@ func NewPostgresRepository[T Entity](db *sql.DB) *PostgresRepository {
 }
 
 func (r *PostgresRepository) Create(entity model.Link) error {
-	_, err := r.db.Exec("INSERT INTO links VALUES ($1, $2)", entity.ID, entity.URL)
+	_, err := r.db.Exec("INSERT INTO links (id, url) VALUES ($1, $2)", entity.ID, entity.URL)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (r *PostgresRepository) CreateMany(entities []model.Link) (int, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	var totalInsertedCount int
+
+	for _, value := range entities {
+		res, err := tx.Exec(
+			"INSERT INTO links (id, url) VALUES ($1, $2)",
+			value.ID,
+			value.URL,
+		)
+		if err != nil {
+			return 0, err
+		}
+
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+
+		totalInsertedCount += int(rowsAffected)
+	}
+
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	return totalInsertedCount, nil
 }
 
 func (r *PostgresRepository) GetByID(id string) (model.Link, error) {

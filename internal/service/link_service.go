@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"shorturl/internal/config"
 	"shorturl/internal/logger"
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
@@ -13,6 +14,7 @@ import (
 )
 
 type LinkServiceInterface interface {
+	CreateMany(links []model.Link) error
 	Create(url string) (string, error)
 	Get(id string) (string, error)
 }
@@ -20,10 +22,23 @@ type LinkServiceInterface interface {
 type LinkService struct {
 	repository repository.Repository[model.Link]
 	logger     zap.Logger
+	config     config.Config
 }
 
 func NewLinkService(repository repository.Repository[model.Link], logger zap.Logger) *LinkService {
 	return &LinkService{repository: repository, logger: logger}
+}
+
+func (linkService *LinkService) CreateMany(links []model.Link) error {
+	res, err := linkService.repository.CreateMany(links)
+	linkService.logger.Info("Batch links was added", zap.Int("count", res))
+
+	if err != nil {
+		linkService.logger.Info("Error while adding batch", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (linkService *LinkService) Create(url string) (string, error) {

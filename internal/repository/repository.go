@@ -6,5 +6,6 @@ type Entity interface {
 
 type Repository[T Entity] interface {
 	Create(entity T) error
+	CreateMany(entity []T) (int, error)
 	GetByID(id string) (T, error)
 }

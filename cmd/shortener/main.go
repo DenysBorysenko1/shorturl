@@ -70,10 +70,12 @@ func newRouter(linkService service.LinkServiceInterface, config config.Config) c
 	router.Use(logger.WithLogging)
 	router.Use(middleware.WithCompress)
 
-	router.Post("/", handler.Generate(linkService, config.BaseURL))
-	router.Post("/api/shorten", handler.GenerateJSON(linkService, config))
 	router.Get("/{id}", handler.Retrieve(linkService))
 	router.Get("/ping", handler.Ping(logger.Log, config))
+	
+	router.Post("/", handler.Generate(linkService, config.BaseURL))
+	router.Post("/api/shorten", handler.GenerateJSON(linkService, config))
+	router.Post("/api/shorten/batch", handler.GenerateBatch(linkService, config))
 
 	return router
 }

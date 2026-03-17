@@ -26,6 +26,22 @@ func NewFileRepository[T Entity](filename string) (*FileRepository[T], error) {
 	return repo, nil
 }
 
+func (r *FileRepository[T]) CreateMany(entities []T) (int, error) {
+	items, err := r.loadAll()
+	if err != nil {
+		return 0, err
+	}
+
+	items = append(items, entities...)
+	err = r.saveAll(items)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return len(entities), nil
+}
+
 func (r *FileRepository[T]) loadAll() ([]T, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

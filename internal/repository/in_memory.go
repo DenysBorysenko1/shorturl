@@ -16,6 +16,15 @@ func NewInMemoryRepository[T Entity]() *InMemoryRepository[T] {
 	}
 }
 
+func (repository *InMemoryRepository[T]) CreateMany(entities []T) (int, error) {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
+
+	repository.data = append(repository.data, entities...)
+
+	return len(entities), nil
+}
+
 func (repository *InMemoryRepository[T]) Create(entity T) error {
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
