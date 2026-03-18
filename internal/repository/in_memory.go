@@ -2,21 +2,22 @@ package repository
 
 import (
 	"errors"
+	"shorturl/internal/model"
 	"sync"
 )
 
-type InMemoryRepository[T Entity] struct {
-	data []T
+type InMemoryRepository struct {
+	data []model.Link
 	mu   sync.RWMutex
 }
 
-func NewInMemoryRepository[T Entity]() *InMemoryRepository[T] {
-	return &InMemoryRepository[T]{
-		data: make([]T, 0),
+func NewInMemoryRepository[T Entity]() *InMemoryRepository {
+	return &InMemoryRepository{
+		data: make([]model.Link, 0),
 	}
 }
 
-func (repository *InMemoryRepository[T]) CreateMany(entities []T) (int, error) {
+func (repository *InMemoryRepository) CreateMany(entities []model.Link) (int, error) {
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
 
@@ -25,7 +26,7 @@ func (repository *InMemoryRepository[T]) CreateMany(entities []T) (int, error) {
 	return len(entities), nil
 }
 
-func (repository *InMemoryRepository[T]) Create(entity T) error {
+func (repository *InMemoryRepository) Create(entity model.Link) error {
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
 
@@ -34,7 +35,7 @@ func (repository *InMemoryRepository[T]) Create(entity T) error {
 	return nil
 }
 
-func (repository *InMemoryRepository[T]) GetByID(id string) (T, error) {
+func (repository *InMemoryRepository) GetByID(id string) (model.Link, error) {
 	repository.mu.RLock()
 	defer repository.mu.RUnlock()
 
@@ -44,8 +45,22 @@ func (repository *InMemoryRepository[T]) GetByID(id string) (T, error) {
 		}
 	}
 
-	var zero T
+	var zero model.Link
 
 	return zero, errors.New("not found")
 
+}
+
+func (repository *InMemoryRepository) GetByURL(url string) (model.Link, error) {
+	repository.mu.RLock()
+	defer repository.mu.RUnlock()
+
+	for _, item := range repository.data {
+		if item.GetURL() == url {
+			return item, nil
+		}
+	}
+
+	var zero model.Link
+	return zero, errors.New("not found")
 }

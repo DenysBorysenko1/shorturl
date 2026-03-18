@@ -3,6 +3,7 @@ package mocks
 import "shorturl/internal/model"
 
 type MockLinkService struct {
+	GetByURLFunc   func(url string) (model.Link, error)
 	CreateFunc     func(url string) (string, error)
 	CreateManyFunc func(links []model.Link) error
 	GetFunc        func(url string) (string, error)
@@ -30,4 +31,13 @@ func (linkService *MockLinkService) Get(id string) (string, error) {
 	}
 
 	return "", nil
+}
+
+func (linkService *MockLinkService) GetByURL(url string) (model.Link, error) {
+	if linkService.GetByURLFunc != nil {
+		return linkService.GetByURLFunc(url)
+	}
+
+	var zero = model.Link{}
+	return zero, nil
 }

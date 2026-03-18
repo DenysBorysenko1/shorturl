@@ -14,6 +14,7 @@ import (
 )
 
 type LinkServiceInterface interface {
+	GetByURL(url string) (model.Link, error)
 	CreateMany(links []model.Link) error
 	Create(url string) (string, error)
 	Get(id string) (string, error)
@@ -70,4 +71,14 @@ func (linkService *LinkService) Get(id string) (string, error) {
 	}
 
 	return data.URL, nil
+}
+
+func (linkService *LinkService) GetByURL(url string) (model.Link, error) {
+	link, err := linkService.repository.GetByURL(url)
+	if err != nil {
+		var zero model.Link
+		return zero, err
+	}
+
+	return link, nil
 }

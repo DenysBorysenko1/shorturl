@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"shorturl/internal/handler"
+	"shorturl/internal/model"
 	"shorturl/internal/service/mocks"
 	"strings"
 	"testing"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -82,6 +85,21 @@ func TestGenerate(t *testing.T) {
 				response:    "Error while creating\n",
 			},
 		},
+		{
+			name:     "unique violation conflict",
+			method:   "POST",
+			path:     "/",
+			urlParam: "https://existing-url.com",
+			createFunc: func(url string) (string, error) {
+				pgErr := &pgconn.PgError{Code: pgerrcode.UniqueViolation}
+				return "", pgErr
+			},
+			want: want{
+				status:      http.StatusConflict,
+				contentType: "text/plain",
+				response:    "http://localhost:8080/existingID",
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -92,6 +110,12 @@ func TestGenerate(t *testing.T) {
 					}
 
 					return test.id, nil
+				},
+				GetByURLFunc: func(url string) (model.Link, error) {
+					return model.Link{
+						BaseEntity: model.BaseEntity{ID: "existingID"},
+						URL:        url,
+					}, nil
 				},
 			}
 

@@ -71,3 +71,14 @@ func (r *PostgresRepository) GetByID(id string) (model.Link, error) {
 	return link, nil
 
 }
+
+func (r *PostgresRepository) GetByURL(url string) (model.Link, error) {
+    var link model.Link
+    row := r.db.QueryRow("SELECT id, url FROM links WHERE url = $1", url)
+    err := row.Scan(&link.ID, &link.URL)
+    if err != nil {
+        var zero model.Link
+        return zero, err
+    }
+    return link, nil
+}

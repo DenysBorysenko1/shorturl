@@ -9,9 +9,12 @@ import (
 	"net/http/httptest"
 	"shorturl/internal/config"
 	"shorturl/internal/handler"
+	"shorturl/internal/model"
 	"shorturl/internal/service/mocks"
 	"testing"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -103,6 +106,27 @@ func TestGenerateJSON(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:   "already exists - conflict 409",
+			method: "POST",
+			path:   "/api/shorten",
+			request: handler.Input{
+				URL: "https://existing-url.com",
+			},
+			createFunc: func(url string) (string, error) {
+				pgErr := &pgconn.PgError{
+					Code: pgerrcode.UniqueViolation,
+				}
+				return "", pgErr
+			},
+			want: want{
+				status:      http.StatusConflict,
+				contentType: "application/json",
+				response: &handler.Response{
+					Result: "http://localhost:8080/abc123",
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -113,6 +137,12 @@ func TestGenerateJSON(t *testing.T) {
 					}
 
 					return test.id, nil
+				},
+				GetByURLFunc: func(url string) (model.Link, error) {
+					return model.Link{
+						BaseEntity: model.BaseEntity{ID: "abc123"},
+						URL:        test.request.URL,
+					}, nil
 				},
 			}
 

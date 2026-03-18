@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"shorturl/internal/model"
 	"sync"
 )
 
-type FileRepository[T Entity] struct {
+type FileRepository struct {
 	filename string
 	mu       sync.RWMutex
 }
 
-func NewFileRepository[T Entity](filename string) (*FileRepository[T], error) {
-	repo := &FileRepository[T]{
+func NewFileRepository[T Entity](filename string) (*FileRepository, error) {
+	repo := &FileRepository{
 		filename: filename,
 	}
 
@@ -26,7 +27,7 @@ func NewFileRepository[T Entity](filename string) (*FileRepository[T], error) {
 	return repo, nil
 }
 
-func (r *FileRepository[T]) CreateMany(entities []T) (int, error) {
+func (r *FileRepository) CreateMany(entities []model.Link) (int, error) {
 	items, err := r.loadAll()
 	if err != nil {
 		return 0, err
@@ -42,7 +43,7 @@ func (r *FileRepository[T]) CreateMany(entities []T) (int, error) {
 	return len(entities), nil
 }
 
-func (r *FileRepository[T]) loadAll() ([]T, error) {
+func (r *FileRepository) loadAll() ([]model.Link, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -52,10 +53,10 @@ func (r *FileRepository[T]) loadAll() ([]T, error) {
 	}
 
 	if len(data) == 0 {
-		return []T{}, nil
+		return []model.Link{}, nil
 	}
 
-	var items []T
+	var items []model.Link
 	if err := json.Unmarshal(data, &items); err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func (r *FileRepository[T]) loadAll() ([]T, error) {
 	return items, nil
 }
 
-func (r *FileRepository[T]) saveAll(items []T) error {
+func (r *FileRepository) saveAll(items []model.Link) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -79,7 +80,7 @@ func (r *FileRepository[T]) saveAll(items []T) error {
 	return nil
 }
 
-func (r *FileRepository[T]) Create(entity T) error {
+func (r *FileRepository) Create(entity model.Link) error {
 	items, err := r.loadAll()
 	if err != nil {
 		return err
@@ -90,10 +91,10 @@ func (r *FileRepository[T]) Create(entity T) error {
 	return r.saveAll(items)
 }
 
-func (r *FileRepository[T]) GetByID(id string) (T, error) {
+func (r *FileRepository) GetByID(id string) (model.Link, error) {
 	items, err := r.loadAll()
 	if err != nil {
-		var zero T
+		var zero model.Link
 		return zero, err
 	}
 
@@ -103,6 +104,23 @@ func (r *FileRepository[T]) GetByID(id string) (T, error) {
 		}
 	}
 
-	var zero T
+	var zero model.Link
+	return zero, errors.New("not found")
+}
+
+func (repository *FileRepository) GetByURL(url string) (model.Link, error) {
+	items, err := repository.loadAll()
+	if err != nil {
+		var zero model.Link
+		return zero, err
+	}
+
+	for _, item := range items {
+		if item.GetURL() == url {
+			return item, nil
+		}
+	}
+
+	var zero model.Link
 	return zero, errors.New("not found")
 }
