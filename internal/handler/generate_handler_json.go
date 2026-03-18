@@ -57,7 +57,7 @@ func GenerateJSON(svc service.LinkServiceInterface, config config.Config) http.H
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-				existedUrl, err := svc.GetByURL(url)
+				existedURL, err := svc.GetByURL(url)
 				if err != nil {
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusInternalServerError)
@@ -67,7 +67,7 @@ func GenerateJSON(svc service.LinkServiceInterface, config config.Config) http.H
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusConflict)
 				_ = json.NewEncoder(w).Encode(Response{
-					Result: config.BaseURL + "/" + existedUrl.ID,
+					Result: config.BaseURL + "/" + existedURL.ID,
 				})
 				return
 			}

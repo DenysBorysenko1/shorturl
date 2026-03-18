@@ -35,7 +35,7 @@ func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-				existedUrl, err := svc.GetByURL(url)
+				existedURL, err := svc.GetByURL(url)
 				if err != nil {
 					http.Error(w, "Error while creating", http.StatusInternalServerError)
 					return
@@ -43,7 +43,7 @@ func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc
 
 				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(http.StatusConflict)
-				w.Write([]byte(baseURL + "/" + existedUrl.ID))
+				w.Write([]byte(baseURL + "/" + existedURL.ID))
 				return
 			}
 
