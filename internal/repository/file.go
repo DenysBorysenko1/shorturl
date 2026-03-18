@@ -108,8 +108,8 @@ func (r *FileRepository) GetByID(id string) (model.Link, error) {
 	return zero, errors.New("not found")
 }
 
-func (repository *FileRepository) GetByURL(url string) (model.Link, error) {
-	items, err := repository.loadAll()
+func (r *FileRepository) GetByURL(url string) (model.Link, error) {
+	items, err := r.loadAll()
 	if err != nil {
 		var zero model.Link
 		return zero, err
