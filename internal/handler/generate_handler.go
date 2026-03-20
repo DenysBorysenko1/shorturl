@@ -7,9 +7,6 @@ import (
 	"net/http"
 	"shorturl/internal/service"
 	"strings"
-
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc {
@@ -33,17 +30,11 @@ func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc
 
 		id, err := svc.Create(url)
 		if err != nil {
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-				existedURL, err := svc.GetByURL(url)
-				if err != nil {
-					http.Error(w, "Error while creating", http.StatusInternalServerError)
-					return
-				}
-
+			var conflictErr *service.URLAlreadyExistsError
+			if errors.As(err, &conflictErr) {
 				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(http.StatusConflict)
-				w.Write([]byte(baseURL + "/" + existedURL.ID))
+				w.Write([]byte(baseURL + "/" + conflictErr.ID))
 				return
 			}
 

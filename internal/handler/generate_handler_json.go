@@ -7,9 +7,6 @@ import (
 	"shorturl/internal/config"
 	"shorturl/internal/service"
 	"strings"
-
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type Input struct {
@@ -55,19 +52,12 @@ func GenerateJSON(svc service.LinkServiceInterface, config config.Config) http.H
 
 		id, err := svc.Create(url)
 		if err != nil {
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-				existedURL, err := svc.GetByURL(url)
-				if err != nil {
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusInternalServerError)
-					_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Error while creating"})
-				}
-
+			var conflictErr *service.URLAlreadyExistsError
+			if errors.As(err, &conflictErr) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusConflict)
 				_ = json.NewEncoder(w).Encode(Response{
-					Result: config.BaseURL + "/" + existedURL.ID,
+					Result: config.BaseURL + "/" + conflictErr.ID,
 				})
 				return
 			}

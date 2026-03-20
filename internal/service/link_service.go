@@ -10,6 +10,8 @@ import (
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
 )
 
@@ -24,6 +26,14 @@ type LinkService struct {
 	repository repository.Repository[model.Link]
 	logger     zap.Logger
 	config     config.Config
+}
+
+type URLAlreadyExistsError struct {
+	ID string
+}
+
+func (e *URLAlreadyExistsError) Error() string {
+	return "url already exists"
 }
 
 func NewLinkService(repository repository.Repository[model.Link], logger zap.Logger) *LinkService {
@@ -55,6 +65,16 @@ func (linkService *LinkService) Create(url string) (string, error) {
 	}
 	if err := linkService.repository.Create(link); err != nil {
 		logger.Log.Error(err.Error())
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			existedURL, getErr := linkService.repository.GetByURL(url)
+			if getErr != nil {
+				return "", fmt.Errorf("get existed url: %w", getErr)
+			}
+
+			return "", &URLAlreadyExistsError{ID: existedURL.ID}
+		}
 
 		return "", fmt.Errorf("create link: %w", err)
 	}

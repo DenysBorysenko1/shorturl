@@ -10,11 +10,9 @@ import (
 	"shorturl/internal/config"
 	"shorturl/internal/handler"
 	"shorturl/internal/model"
+	"shorturl/internal/service"
 	"shorturl/internal/service/mocks"
 	"testing"
-
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -114,10 +112,7 @@ func TestGenerateJSON(t *testing.T) {
 				URL: "https://existing-url.com",
 			},
 			createFunc: func(url string) (string, error) {
-				pgErr := &pgconn.PgError{
-					Code: pgerrcode.UniqueViolation,
-				}
-				return "", pgErr
+				return "", &service.URLAlreadyExistsError{ID: "abc123"}
 			},
 			want: want{
 				status:      http.StatusConflict,
