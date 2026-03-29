@@ -82,9 +82,9 @@ func (r *PostgresRepository) GetByURL(url string) (model.Link, error) {
 	return link, nil
 }
 
-func (r *PostgresRepository) GetAllByUserId(userId string) ([]model.Link, error) {
+func (r *PostgresRepository) GetAllByUserID(userID string) ([]model.Link, error) {
 	var links []model.Link
-	err := r.db.Select(&links, `SELECT id, url, created_by FROM links WHERE created_by = $1`, userId)
+	err := r.db.Select(&links, `SELECT id, url, created_by FROM links WHERE created_by = $1`, userID)
 	if err != nil {
 		return nil, err
 	}

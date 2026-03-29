@@ -125,7 +125,7 @@ func (r *FileRepository) GetByURL(url string) (model.Link, error) {
 	return zero, errors.New("not found")
 }
 
-func (r *FileRepository) GetAllByUserId(userId string) ([]model.Link, error) {
+func (r *FileRepository) GetAllByUserID(userID string) ([]model.Link, error) {
 	items, err := r.loadAll()
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (r *FileRepository) GetAllByUserId(userId string) ([]model.Link, error) {
 
 	var result []model.Link
 	for _, item := range items {
-		if item.GetCreatedBy() == userId {
+		if item.GetCreatedBy() == userID {
 			result = append(result, item)
 		}
 	}

@@ -21,7 +21,7 @@ func ListUrls(linkService service.LinkServiceInterface, logger *zap.Logger, conf
 		}
 
 		logger.Info("requesting links for user", zap.String("userID", userID))
-		links, err := linkService.GetAllByUserId(userID)
+		links, err := linkService.GetAllByUserID(userID)
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)

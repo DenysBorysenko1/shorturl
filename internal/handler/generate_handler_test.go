@@ -36,7 +36,7 @@ func TestGenerate(t *testing.T) {
 		path       string
 		id         string
 		urlParam   string
-		createFunc func(url string, userId string) (string, error)
+		createFunc func(url string, userID string) (string, error)
 		want       want
 	}{
 		{
@@ -81,8 +81,8 @@ func TestGenerate(t *testing.T) {
 			path:     "/",
 			urlParam: "https://yandex.ru",
 			id:       "",
-			createFunc: func(url string, userId string) (string, error) {
-				assert.Equal(t, testUserID, userId)
+			createFunc: func(url string, userID string) (string, error) {
+				assert.Equal(t, testUserID, userID)
 				return "", errors.New("error")
 			},
 			want: want{
@@ -96,8 +96,8 @@ func TestGenerate(t *testing.T) {
 			method:   "POST",
 			path:     "/",
 			urlParam: "https://existing-url.com",
-			createFunc: func(url string, userId string) (string, error) {
-				assert.Equal(t, testUserID, userId)
+			createFunc: func(url string, userID string) (string, error) {
+				assert.Equal(t, testUserID, userID)
 				return "", &service.URLAlreadyExistsError{ID: "existingID"}
 			},
 			want: want{
@@ -110,12 +110,12 @@ func TestGenerate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			svc := &mocks.MockLinkService{
-				CreateFunc: func(url string, userId string) (string, error) {
+				CreateFunc: func(url string, userID string) (string, error) {
 					if test.createFunc != nil {
-						return test.createFunc(url, userId)
+						return test.createFunc(url, userID)
 					}
 
-					assert.Equal(t, testUserID, userId)
+					assert.Equal(t, testUserID, userID)
 					return test.id, nil
 				},
 				GetByURLFunc: func(url string) (model.Link, error) {

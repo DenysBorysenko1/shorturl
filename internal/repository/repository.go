@@ -9,5 +9,5 @@ type Repository[T Entity] interface {
 	CreateMany(entity []T) (int, error)
 	GetByID(id string) (T, error)
 	GetByURL(url string) (T, error)
-	GetAllByUserId(userId string) ([]T, error)
+	GetAllByUserID(userID string) ([]T, error)
 }

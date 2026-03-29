@@ -26,7 +26,7 @@ func TestRetrieve(t *testing.T) {
 		path       string
 		method     string
 		urlParam   string
-		createFunc func(url string, userId string) (string, error)
+		createFunc func(url string, userID string) (string, error)
 		getFunc    func(id string) (string, error)
 		want       want
 	}{
@@ -76,9 +76,9 @@ func TestRetrieve(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			svc := &mocks.MockLinkService{
-				CreateFunc: func(url string, userId string) (string, error) {
+				CreateFunc: func(url string, userID string) (string, error) {
 					if test.createFunc != nil {
-						return test.createFunc(url, userId)
+						return test.createFunc(url, userID)
 					}
 
 					return test.id, nil

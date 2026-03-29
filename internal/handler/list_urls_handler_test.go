@@ -29,14 +29,14 @@ func TestListUrls(t *testing.T) {
 		emptyBody       bool
 		errorSubstring  string
 		setCookiePrefix string
-		response        []dto.ResponseListItem 
+		response        []dto.ResponseListItem
 	}
 
 	tests := []struct {
 		name             string
 		userID           string
 		useMiddleware    bool
-		getAllByUserIdFn func(userId string) ([]model.Link, error)
+		getAllByUserIDFn func(userID string) ([]model.Link, error)
 		want             want
 	}{
 		{
@@ -48,8 +48,8 @@ func TestListUrls(t *testing.T) {
 		{
 			name:   "user in context empty list",
 			userID: "test-user-id",
-			getAllByUserIdFn: func(userId string) ([]model.Link, error) {
-				assert.Equal(t, "test-user-id", userId)
+			getAllByUserIDFn: func(userID string) ([]model.Link, error) {
+				assert.Equal(t, "test-user-id", userID)
 				return nil, nil
 			},
 			want: want{
@@ -60,8 +60,8 @@ func TestListUrls(t *testing.T) {
 		{
 			name:   "user with links returns json",
 			userID: "test-user-id",
-			getAllByUserIdFn: func(userId string) ([]model.Link, error) {
-				assert.Equal(t, "test-user-id", userId)
+			getAllByUserIDFn: func(userID string) ([]model.Link, error) {
+				assert.Equal(t, "test-user-id", userID)
 				return []model.Link{
 					{BaseEntity: model.BaseEntity{ID: "abc123"}, URL: "https://one.com"},
 					{BaseEntity: model.BaseEntity{ID: "xyz9"}, URL: "https://two.com"},
@@ -79,7 +79,7 @@ func TestListUrls(t *testing.T) {
 		{
 			name:   "service error",
 			userID: "test-user-id",
-			getAllByUserIdFn: func(userId string) ([]model.Link, error) {
+			getAllByUserIDFn: func(userID string) ([]model.Link, error) {
 				return nil, errors.New("db error")
 			},
 			want: want{
@@ -91,8 +91,8 @@ func TestListUrls(t *testing.T) {
 		{
 			name:          "middleware without cookie issues token and reaches handler",
 			useMiddleware: true,
-			getAllByUserIdFn: func(userId string) ([]model.Link, error) {
-				assert.NotEmpty(t, userId)
+			getAllByUserIDFn: func(userID string) ([]model.Link, error) {
+				assert.NotEmpty(t, userID)
 				return nil, nil
 			},
 			want: want{
@@ -109,8 +109,8 @@ func TestListUrls(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 
 			svc := &mocks.MockLinkService{}
-			if tt.getAllByUserIdFn != nil {
-				svc.GetAllByUserIdFunc = tt.getAllByUserIdFn
+			if tt.getAllByUserIDFn != nil {
+				svc.GetAllByUserIDFunc = tt.getAllByUserIDFn
 			}
 
 			if tt.userID != "" && !tt.useMiddleware {

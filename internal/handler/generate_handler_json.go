@@ -27,7 +27,7 @@ type ErrorResponse struct {
 func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		userId, ok := context.UserID(req.Context())
+		userID, ok := context.UserID(req.Context())
 		if !ok {
 			logger.Error("User id not found in context")
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -60,7 +60,7 @@ func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config c
 			return
 		}
 
-		id, err := svc.Create(url, userId)
+		id, err := svc.Create(url, userID)
 		if err != nil {
 			var conflictErr *service.URLAlreadyExistsError
 			if errors.As(err, &conflictErr) {

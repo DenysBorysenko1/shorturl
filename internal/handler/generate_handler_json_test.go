@@ -36,7 +36,7 @@ func TestGenerateJSON(t *testing.T) {
 		method     string
 		path       string
 		request    handler.Input
-		createFunc func(url string, userId string) (string, error)
+		createFunc func(url string, userID string) (string, error)
 		want       want
 	}{
 		{
@@ -95,7 +95,7 @@ func TestGenerateJSON(t *testing.T) {
 				URL: "https://yandex.ru",
 			},
 			id: "",
-			createFunc: func(url string, userId string) (string, error) {
+			createFunc: func(url string, userID string) (string, error) {
 				return "", errors.New("error")
 			},
 			want: want{
@@ -113,7 +113,7 @@ func TestGenerateJSON(t *testing.T) {
 			request: handler.Input{
 				URL: "https://existing-url.com",
 			},
-			createFunc: func(url string, userId string) (string, error) {
+			createFunc: func(url string, userID string) (string, error) {
 				return "", &service.URLAlreadyExistsError{ID: "abc123"}
 			},
 			want: want{
@@ -128,9 +128,9 @@ func TestGenerateJSON(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			svc := &mocks.MockLinkService{
-				CreateFunc: func(url string, userId string) (string, error) {
+				CreateFunc: func(url string, userID string) (string, error) {
 					if test.createFunc != nil {
-						return test.createFunc(url, userId)
+						return test.createFunc(url, userID)
 					}
 
 					return test.id, nil

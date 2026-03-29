@@ -16,7 +16,7 @@ func GenerateBatch(svc service.LinkServiceInterface, logger *zap.Logger, config 
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		userId, ok := context.UserID(req.Context())
+		userID, ok := context.UserID(req.Context())
 		if !ok {
 			logger.Error("User id not found in context")
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -54,7 +54,7 @@ func GenerateBatch(svc service.LinkServiceInterface, logger *zap.Logger, config 
 			preparedInputLink := model.Link{
 				BaseEntity: model.BaseEntity{ID: value.CorrelationID},
 				URL:        value.OriginalURL,
-				CreatedBy:  userId,
+				CreatedBy:  userID,
 			}
 			preparedInputLinks[index] = preparedInputLink
 		}
