@@ -64,3 +64,17 @@ func (repository *InMemoryRepository) GetByURL(url string) (model.Link, error) {
 	var zero model.Link
 	return zero, errors.New("not found")
 }
+
+func (repository *InMemoryRepository) GetAllByUserId(userId string) ([]model.Link, error) {
+	defer repository.mu.RUnlock()
+
+	var result []model.Link
+
+	for _, item := range repository.data {
+		if item.GetCreatedBy() == userId {
+			result = append(result, item)
+		}
+	}
+
+	return result, nil
+}

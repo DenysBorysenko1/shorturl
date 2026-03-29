@@ -5,13 +5,24 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"shorturl/internal/config"
+	"shorturl/internal/context"
 	"shorturl/internal/service"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
-func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc {
+func Generate(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := context.UserID(r.Context())
+		if !ok {
+			logger.Error("User id not found in context")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
 		if r.Method != http.MethodPost {
 			http.Error(w, "Only POST", http.StatusMethodNotAllowed)
 			return
@@ -28,13 +39,13 @@ func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc
 			return
 		}
 
-		id, err := svc.Create(url)
+		id, err := svc.Create(url, userID)
 		if err != nil {
 			var conflictErr *service.URLAlreadyExistsError
 			if errors.As(err, &conflictErr) {
 				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(http.StatusConflict)
-				w.Write([]byte(baseURL + "/" + conflictErr.ID))
+				w.Write([]byte(config.BaseURL + "/" + conflictErr.ID))
 				return
 			}
 
@@ -44,7 +55,7 @@ func Generate(svc service.LinkServiceInterface, baseURL string) http.HandlerFunc
 
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(baseURL + "/" + id))
+		w.Write([]byte(config.BaseURL + "/" + id))
 	}
 
 }

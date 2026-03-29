@@ -3,15 +3,16 @@ package mocks
 import "shorturl/internal/model"
 
 type MockLinkService struct {
-	GetByURLFunc   func(url string) (model.Link, error)
-	CreateFunc     func(url string) (string, error)
-	CreateManyFunc func(links []model.Link) error
-	GetFunc        func(url string) (string, error)
+	GetByURLFunc       func(url string) (model.Link, error)
+	CreateFunc         func(url string, userId string) (string, error)
+	CreateManyFunc     func(links []model.Link) error
+	GetFunc            func(url string) (string, error)
+	GetAllByUserIdFunc func(userId string) ([]model.Link, error)
 }
 
-func (linkService *MockLinkService) Create(url string) (string, error) {
+func (linkService *MockLinkService) Create(url string, userId string) (string, error) {
 	if linkService.CreateFunc != nil {
-		return linkService.CreateFunc(url)
+		return linkService.CreateFunc(url, userId)
 	}
 
 	return "", nil
@@ -40,4 +41,12 @@ func (linkService *MockLinkService) GetByURL(url string) (model.Link, error) {
 
 	var zero = model.Link{}
 	return zero, nil
+}
+
+func (linkService *MockLinkService) GetAllByUserId(userId string) ([]model.Link, error) {
+	if linkService.GetAllByUserIdFunc != nil {
+		return linkService.GetAllByUserIdFunc(userId)
+	}
+
+	return nil, nil
 }

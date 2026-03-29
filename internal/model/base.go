@@ -1,7 +1,7 @@
 package model
 
 type BaseEntity struct {
-	ID string
+	ID string `db:"id"`
 }
 
 func (entity BaseEntity) GetID() string {

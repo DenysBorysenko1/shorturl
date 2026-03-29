@@ -13,6 +13,7 @@ import (
 	"shorturl/internal/service"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
 	_ "github.com/jackc/pgx/v5"
@@ -49,7 +50,8 @@ func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Lin
 
 		logger.Info("While initialize link repository POSTGRES source had chosen")
 
-		return repository.NewPostgresRepository[model.Link](db)
+		sqlxDB := sqlx.NewDb(db, "pgx")
+		return repository.NewPostgresRepository[model.Link](sqlxDB)
 	}
 
 	if config.Cfg.FileStorageURL != "" {
@@ -67,15 +69,19 @@ func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Lin
 
 func newRouter(linkService service.LinkServiceInterface, config config.Config) chi.Router {
 	router := chi.NewRouter()
+
 	router.Use(logger.WithLogging)
+	router.Use(middleware.WithAuthCookie(logger.Log, config))
 	router.Use(middleware.WithCompress)
 
 	router.Get("/{id}", handler.Retrieve(linkService))
 	router.Get("/ping", handler.Ping(logger.Log, config))
-	
-	router.Post("/", handler.Generate(linkService, config.BaseURL))
-	router.Post("/api/shorten", handler.GenerateJSON(linkService, config))
-	router.Post("/api/shorten/batch", handler.GenerateBatch(linkService, config))
+
+	router.Post("/", handler.Generate(linkService, logger.Log, config))
+	router.Post("/api/shorten", handler.GenerateJSON(linkService, logger.Log, config))
+	router.Post("/api/shorten/batch", handler.GenerateBatch(linkService, logger.Log, config))
+
+	router.Get("/api/user/urls", handler.ListUrls(linkService, logger.Log, config))
 
 	return router
 }

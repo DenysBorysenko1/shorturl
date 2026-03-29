@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"shorturl/internal/config"
+	appctx "shorturl/internal/context"
 	"shorturl/internal/dto"
 	"shorturl/internal/handler"
 	"shorturl/internal/model"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestGenerateBatch(t *testing.T) {
@@ -103,8 +105,11 @@ func TestGenerateBatch(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			service := &mocks.MockLinkService{
+			svc := &mocks.MockLinkService{
 				CreateManyFunc: func(links []model.Link) error {
+					for _, link := range links {
+						assert.Equal(t, testUserID, link.CreatedBy)
+					}
 					if test.createManyFunc != nil {
 						return test.createManyFunc(links)
 					}
@@ -117,8 +122,9 @@ func TestGenerateBatch(t *testing.T) {
 			require.NoError(t, err)
 
 			request := httptest.NewRequest(test.method, test.path, bytes.NewReader(jsonRequest))
+			request = request.WithContext(appctx.WithUserID(request.Context(), testUserID))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GenerateBatch(service, config.Cfg))
+			h := http.HandlerFunc(handler.GenerateBatch(svc, zap.NewNop(), config.Cfg))
 
 			h(w, request)
 

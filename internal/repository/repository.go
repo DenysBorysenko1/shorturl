@@ -2,7 +2,6 @@ package repository
 
 type Entity interface {
 	GetID() string
-	
 }
 
 type Repository[T Entity] interface {
@@ -10,4 +9,5 @@ type Repository[T Entity] interface {
 	CreateMany(entity []T) (int, error)
 	GetByID(id string) (T, error)
 	GetByURL(url string) (T, error)
+	GetAllByUserId(userId string) ([]T, error)
 }

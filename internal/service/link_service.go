@@ -18,7 +18,8 @@ import (
 type LinkServiceInterface interface {
 	GetByURL(url string) (model.Link, error)
 	CreateMany(links []model.Link) error
-	Create(url string) (string, error)
+	GetAllByUserId(userId string) ([]model.Link, error)
+	Create(url string, userId string) (string, error)
 	Get(id string) (string, error)
 }
 
@@ -52,7 +53,7 @@ func (linkService *LinkService) CreateMany(links []model.Link) error {
 	return nil
 }
 
-func (linkService *LinkService) Create(url string) (string, error) {
+func (linkService *LinkService) Create(url string, userId string) (string, error) {
 	bytes := make([]byte, 4)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", fmt.Errorf("generate id: %w", err)
@@ -62,6 +63,7 @@ func (linkService *LinkService) Create(url string) (string, error) {
 	link := model.Link{
 		BaseEntity: model.BaseEntity{ID: id},
 		URL:        url,
+		CreatedBy:  userId,
 	}
 	if err := linkService.repository.Create(link); err != nil {
 		logger.Log.Error(err.Error())
@@ -101,4 +103,15 @@ func (linkService *LinkService) GetByURL(url string) (model.Link, error) {
 	}
 
 	return link, nil
+}
+
+func (linkService *LinkService) GetAllByUserId(userId string) ([]model.Link, error) {
+	links, err := linkService.repository.GetAllByUserId(userId)
+	if err != nil {
+		linkService.logger.Info("Error while retrieving all links for", zap.Error(err))
+
+		return nil, err
+	}
+
+	return links, nil
 }

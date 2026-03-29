@@ -26,7 +26,7 @@ func TestRetrieve(t *testing.T) {
 		path       string
 		method     string
 		urlParam   string
-		createFunc func(url string) (string, error)
+		createFunc func(url string, userId string) (string, error)
 		getFunc    func(id string) (string, error)
 		want       want
 	}{
@@ -75,10 +75,10 @@ func TestRetrieve(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			service := &mocks.MockLinkService{
-				CreateFunc: func(url string) (string, error) {
+			svc := &mocks.MockLinkService{
+				CreateFunc: func(url string, userId string) (string, error) {
 					if test.createFunc != nil {
-						return test.createFunc(url)
+						return test.createFunc(url, userId)
 					}
 
 					return test.id, nil
@@ -92,7 +92,7 @@ func TestRetrieve(t *testing.T) {
 				},
 			}
 			r := chi.NewRouter()
-			r.Get("/{id}", handler.Retrieve(service))
+			r.Get("/{id}", handler.Retrieve(svc))
 			request := httptest.NewRequest(test.method, "http://localhost"+test.path, nil)
 			recorder := httptest.NewRecorder()
 			r.ServeHTTP(recorder, request)

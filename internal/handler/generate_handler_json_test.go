@@ -8,17 +8,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"shorturl/internal/config"
+	appctx "shorturl/internal/context"
 	"shorturl/internal/handler"
 	"shorturl/internal/model"
 	"shorturl/internal/service"
 	"shorturl/internal/service/mocks"
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestGenerateJSON(t *testing.T) {
-
 	config.Load()
 
 	type want struct {
@@ -34,7 +36,7 @@ func TestGenerateJSON(t *testing.T) {
 		method     string
 		path       string
 		request    handler.Input
-		createFunc func(url string) (string, error)
+		createFunc func(url string, userId string) (string, error)
 		want       want
 	}{
 		{
@@ -49,7 +51,7 @@ func TestGenerateJSON(t *testing.T) {
 				status:      http.StatusCreated,
 				contentType: "application/json",
 				response: &handler.Response{
-					Result: "http://localhost:8080/123",
+					Result: config.Cfg.BaseURL + "/123",
 				},
 			},
 		},
@@ -93,7 +95,7 @@ func TestGenerateJSON(t *testing.T) {
 				URL: "https://yandex.ru",
 			},
 			id: "",
-			createFunc: func(url string) (string, error) {
+			createFunc: func(url string, userId string) (string, error) {
 				return "", errors.New("error")
 			},
 			want: want{
@@ -111,24 +113,24 @@ func TestGenerateJSON(t *testing.T) {
 			request: handler.Input{
 				URL: "https://existing-url.com",
 			},
-			createFunc: func(url string) (string, error) {
+			createFunc: func(url string, userId string) (string, error) {
 				return "", &service.URLAlreadyExistsError{ID: "abc123"}
 			},
 			want: want{
 				status:      http.StatusConflict,
 				contentType: "application/json",
 				response: &handler.Response{
-					Result: "http://localhost:8080/abc123",
+					Result: config.Cfg.BaseURL + "/abc123",
 				},
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			service := &mocks.MockLinkService{
-				CreateFunc: func(url string) (string, error) {
+			svc := &mocks.MockLinkService{
+				CreateFunc: func(url string, userId string) (string, error) {
 					if test.createFunc != nil {
-						return test.createFunc(url)
+						return test.createFunc(url, userId)
 					}
 
 					return test.id, nil
@@ -145,8 +147,10 @@ func TestGenerateJSON(t *testing.T) {
 			require.NoError(t, err)
 
 			request := httptest.NewRequest(test.method, test.path, bytes.NewReader(jsonRequest))
+			request = request.WithContext(appctx.WithUserID(request.Context(), testUserID))
+
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GenerateJSON(service, config.Cfg))
+			h := http.HandlerFunc(handler.GenerateJSON(svc, zap.NewNop(), config.Cfg))
 
 			h(w, request)
 

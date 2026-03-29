@@ -1,22 +1,23 @@
 package repository
 
 import (
-	"database/sql"
 	"shorturl/internal/model"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type PostgresRepository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
-func NewPostgresRepository[T Entity](db *sql.DB) *PostgresRepository {
+func NewPostgresRepository[T Entity](db *sqlx.DB) *PostgresRepository {
 	return &PostgresRepository{
 		db: db,
 	}
 }
 
 func (r *PostgresRepository) Create(entity model.Link) error {
-	_, err := r.db.Exec("INSERT INTO links (id, url) VALUES ($1, $2)", entity.ID, entity.URL)
+	_, err := r.db.Exec("INSERT INTO links (id, url, created_by) VALUES ($1, $2, $3)", entity.ID, entity.URL, entity.CreatedBy)
 	if err != nil {
 		return err
 	}
@@ -34,9 +35,10 @@ func (r *PostgresRepository) CreateMany(entities []model.Link) (int, error) {
 
 	for _, value := range entities {
 		res, err := tx.Exec(
-			"INSERT INTO links (id, url) VALUES ($1, $2)",
+			"INSERT INTO links (id, url, created_by) VALUES ($1, $2, $3)",
 			value.ID,
 			value.URL,
+			value.CreatedBy,
 		)
 		if err != nil {
 			return 0, err
@@ -61,24 +63,31 @@ func (r *PostgresRepository) CreateMany(entities []model.Link) (int, error) {
 
 func (r *PostgresRepository) GetByID(id string) (model.Link, error) {
 	var link model.Link
-	row := r.db.QueryRow("SELECT id, url from links WHERE id=$1", id)
-	err := row.Scan(&link.ID, &link.URL)
+	err := r.db.Get(&link, "SELECT id, url, created_by FROM links WHERE id=$1", id)
 	if err != nil {
 		var zero model.Link
 		return zero, err
 	}
 
 	return link, nil
-
 }
 
 func (r *PostgresRepository) GetByURL(url string) (model.Link, error) {
-    var link model.Link
-    row := r.db.QueryRow("SELECT id, url FROM links WHERE url = $1", url)
-    err := row.Scan(&link.ID, &link.URL)
-    if err != nil {
-        var zero model.Link
-        return zero, err
-    }
-    return link, nil
+	var link model.Link
+	err := r.db.Get(&link, "SELECT id, url, created_by FROM links WHERE url = $1", url)
+	if err != nil {
+		var zero model.Link
+		return zero, err
+	}
+	return link, nil
+}
+
+func (r *PostgresRepository) GetAllByUserId(userId string) ([]model.Link, error) {
+	var links []model.Link
+	err := r.db.Select(&links, `SELECT id, url, created_by FROM links WHERE created_by = $1`, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return links, nil
 }

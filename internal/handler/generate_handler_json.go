@@ -5,8 +5,11 @@ import (
 	"errors"
 	"net/http"
 	"shorturl/internal/config"
+	"shorturl/internal/context"
 	"shorturl/internal/service"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 type Input struct {
@@ -21,9 +24,16 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func GenerateJSON(svc service.LinkServiceInterface, config config.Config) http.HandlerFunc {
+func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
+		userId, ok := context.UserID(req.Context())
+		if !ok {
+			logger.Error("User id not found in context")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
 		if req.Method != http.MethodPost {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -50,7 +60,7 @@ func GenerateJSON(svc service.LinkServiceInterface, config config.Config) http.H
 			return
 		}
 
-		id, err := svc.Create(url)
+		id, err := svc.Create(url, userId)
 		if err != nil {
 			var conflictErr *service.URLAlreadyExistsError
 			if errors.As(err, &conflictErr) {
