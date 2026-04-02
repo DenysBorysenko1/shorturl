@@ -9,6 +9,8 @@ import (
 	"shorturl/internal/logger"
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
+	"sync"
+	"time"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -21,12 +23,26 @@ type LinkServiceInterface interface {
 	GetAllByUserID(userID string) ([]model.Link, error)
 	Create(url string, userID string) (string, error)
 	Get(id string) (string, error)
+	EnqueueDelete(ids []string, userID string) error
 }
 
 type LinkService struct {
 	repository repository.Repository[model.Link]
 	logger     zap.Logger
 	config     config.Config
+
+	deleteOnce sync.Once
+	deleteCh   chan deleteJob
+}
+
+var (
+	ErrNotFound    = errors.New("not found")
+	ErrLinkDeleted = errors.New("link deleted")
+)
+
+type deleteJob struct {
+	userID string
+	ids    []string
 }
 
 type URLAlreadyExistsError struct {
@@ -38,7 +54,13 @@ func (e *URLAlreadyExistsError) Error() string {
 }
 
 func NewLinkService(repository repository.Repository[model.Link], logger zap.Logger) *LinkService {
-	return &LinkService{repository: repository, logger: logger}
+	svc := &LinkService{
+		repository: repository,
+		logger:     logger,
+		deleteCh:   make(chan deleteJob, 1024),
+	}
+	svc.startDeleteWorker()
+	return svc
 }
 
 func (linkService *LinkService) CreateMany(links []model.Link) error {
@@ -89,7 +111,11 @@ func (linkService *LinkService) Get(id string) (string, error) {
 	if err != nil {
 		logger.Log.Error(err.Error())
 
-		return "", errors.New("not found")
+		return "", ErrNotFound
+	}
+
+	if data.IsDeleted {
+		return "", ErrLinkDeleted
 	}
 
 	return data.URL, nil
@@ -114,4 +140,52 @@ func (linkService *LinkService) GetAllByUserID(userID string) ([]model.Link, err
 	}
 
 	return links, nil
+}
+
+func (linkService *LinkService) EnqueueDelete(ids []string, userID string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	linkService.startDeleteWorker()
+	linkService.deleteCh <- deleteJob{userID: userID, ids: ids}
+	return nil
+}
+
+func (linkService *LinkService) startDeleteWorker() {
+	linkService.deleteOnce.Do(func() {
+		go linkService.deleteWorker()
+	})
+}
+
+func (linkService *LinkService) flush(buf map[string][]string) {
+	for userID, ids := range buf {
+		if len(ids) == 0 {
+			continue
+		}
+
+		if err := linkService.repository.SoftDeleteByIDs(ids, userID); err != nil {
+			linkService.logger.Info("failed to soft-delete links", zap.Error(err))
+		}
+	}
+}
+
+func (linkService *LinkService) deleteWorker() {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	buf := make(map[string][]string)
+
+	for {
+		select {
+		case job := <-linkService.deleteCh:
+			if len(job.ids) == 0 || job.userID == "" {
+				continue
+			}
+			buf[job.userID] = append(buf[job.userID], job.ids...)
+
+		case <-ticker.C:
+			linkService.flush(buf)
+			buf = make(map[string][]string)
+		}
+	}
 }

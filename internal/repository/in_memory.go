@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"slices"
 	"shorturl/internal/model"
 	"sync"
 )
@@ -66,15 +67,29 @@ func (repository *InMemoryRepository) GetByURL(url string) (model.Link, error) {
 }
 
 func (repository *InMemoryRepository) GetAllByUserID(userID string) ([]model.Link, error) {
+	repository.mu.RLock()
 	defer repository.mu.RUnlock()
 
 	var result []model.Link
 
 	for _, item := range repository.data {
-		if item.GetCreatedBy() == userID {
+		if item.GetCreatedBy() == userID && !item.IsDeleted {
 			result = append(result, item)
 		}
 	}
 
 	return result, nil
+}
+
+func (repository *InMemoryRepository) SoftDeleteByIDs(ids []string, userID string) error {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
+
+	for i := range repository.data {
+		if repository.data[i].CreatedBy == userID && slices.Contains(ids, repository.data[i].ID) {
+			repository.data[i].IsDeleted = true
+		}
+	}
+
+	return nil
 }

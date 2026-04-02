@@ -83,5 +83,7 @@ func newRouter(linkService service.LinkServiceInterface, config config.Config) c
 
 	router.Get("/api/user/urls", handler.ListUrls(linkService, logger.Log, config))
 
+	router.Delete("/api/user/urls", handler.RemoveListUrls(linkService, logger.Log, config))
+
 	return router
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"slices"
 	"shorturl/internal/model"
 	"sync"
 )
@@ -133,10 +134,25 @@ func (r *FileRepository) GetAllByUserID(userID string) ([]model.Link, error) {
 
 	var result []model.Link
 	for _, item := range items {
-		if item.GetCreatedBy() == userID {
+		if item.GetCreatedBy() == userID && !item.IsDeleted {
 			result = append(result, item)
 		}
 	}
 
 	return result, nil
+}
+
+func (r *FileRepository) SoftDeleteByIDs(ids []string, userID string) error {
+	items, err := r.loadAll()
+	if err != nil {
+		return err
+	}
+
+	for i := range items {
+		if items[i].CreatedBy == userID && slices.Contains(ids, items[i].ID) {
+			items[i].IsDeleted = true
+		}
+	}
+
+	return r.saveAll(items)
 }

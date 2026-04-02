@@ -10,4 +10,5 @@ type Repository[T Entity] interface {
 	GetByID(id string) (T, error)
 	GetByURL(url string) (T, error)
 	GetAllByUserID(userID string) ([]T, error)
+	SoftDeleteByIDs(ids []string, userID string) error
 }

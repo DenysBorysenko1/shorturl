@@ -8,6 +8,7 @@ type MockLinkService struct {
 	CreateManyFunc     func(links []model.Link) error
 	GetFunc            func(url string) (string, error)
 	GetAllByUserIDFunc func(userID string) ([]model.Link, error)
+	EnqueueDeleteFunc  func(ids []string, userID string) error
 }
 
 func (linkService *MockLinkService) Create(url string, userID string) (string, error) {
@@ -49,4 +50,11 @@ func (linkService *MockLinkService) GetAllByUserID(userID string) ([]model.Link,
 	}
 
 	return nil, nil
+}
+
+func (linkService *MockLinkService) EnqueueDelete(ids []string, userID string) error {
+	if linkService.EnqueueDeleteFunc != nil {
+		return linkService.EnqueueDeleteFunc(ids, userID)
+	}
+	return nil
 }
