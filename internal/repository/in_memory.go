@@ -70,7 +70,7 @@ func (repository *InMemoryRepository) GetAllByUserID(userID string) ([]model.Lin
 	repository.mu.RLock()
 	defer repository.mu.RUnlock()
 
-	var result []model.Link
+	result := make([]model.Link, 0, len(repository.data)/2)
 
 	for _, item := range repository.data {
 		if item.GetCreatedBy() == userID && !item.IsDeleted {
