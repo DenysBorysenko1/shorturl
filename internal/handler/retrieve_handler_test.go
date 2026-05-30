@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"shorturl/internal/audit"
 	"shorturl/internal/handler"
 	"shorturl/internal/service"
 	"shorturl/internal/service/mocks"
@@ -105,7 +106,7 @@ func TestRetrieve(t *testing.T) {
 				},
 			}
 			r := chi.NewRouter()
-			r.Get("/{id}", handler.Retrieve(svc))
+			r.Get("/{id}", handler.Retrieve(svc, audit.NewBroadcaster()))
 			request := httptest.NewRequest(test.method, "http://localhost"+test.path, nil)
 			recorder := httptest.NewRecorder()
 			r.ServeHTTP(recorder, request)

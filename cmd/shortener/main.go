@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"net/http"
+	"shorturl/internal/audit"
 	"shorturl/internal/config"
 	dbpkg "shorturl/internal/db"
 	"shorturl/internal/handler"
@@ -26,7 +27,8 @@ func main() {
 	linkRepository := initializeLinkRepository(*logger.Log)
 	linkService := service.NewLinkService(linkRepository, *logger.Log)
 
-	router := newRouter(linkService, config.Cfg)
+	broadcaster := initializeAuditBroadcaster(*logger.Log)
+	router := newRouter(linkService, config.Cfg, broadcaster)
 
 	logger.Log.Info("Starting server at", zap.String("address", config.Cfg.ServerAddress))
 	if err := http.ListenAndServe(config.Cfg.ServerAddress, router); err != nil {
@@ -67,23 +69,49 @@ func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Lin
 	return repository.NewInMemoryRepository[model.Link]()
 }
 
-func newRouter(linkService service.LinkServiceInterface, config config.Config) chi.Router {
+func initializeAuditBroadcaster(logger zap.Logger) *audit.Broadcaster {
+	broadcaster := audit.NewBroadcaster()
+
+	if config.Cfg.AuditFile != "" {
+		fileObserver, err := audit.NewFileObserver(config.Cfg.AuditFile)
+		if err != nil {
+			logger.Error("Failed to initialize file audit observer", zap.Error(err))
+		} else {
+			broadcaster.Attach(fileObserver)
+			logger.Info("File audit observer initialized", zap.String("path", config.Cfg.AuditFile))
+		}
+	}
+
+	if config.Cfg.AuditURL != "" {
+		httpObserver, err := audit.NewConcurrentHTTPObserver(config.Cfg.AuditURL)
+		if err != nil {
+			logger.Error("Failed to initialize HTTP audit observer", zap.Error(err))
+		} else {
+			broadcaster.Attach(httpObserver)
+			logger.Info("HTTP audit observer initialized", zap.String("url", config.Cfg.AuditURL))
+		}
+	}
+
+	return broadcaster
+}
+
+func newRouter(linkService service.LinkServiceInterface, cfg config.Config, broadcaster *audit.Broadcaster) chi.Router {
 	router := chi.NewRouter()
 
 	router.Use(logger.WithLogging)
-	router.Use(middleware.WithAuthCookie(logger.Log, config))
+	router.Use(middleware.WithAuthCookie(logger.Log, cfg))
 	router.Use(middleware.WithCompress)
 
-	router.Get("/{id}", handler.Retrieve(linkService))
-	router.Get("/ping", handler.Ping(logger.Log, config))
+	router.Get("/{id}", handler.Retrieve(linkService, broadcaster))
+	router.Get("/ping", handler.Ping(logger.Log, cfg))
 
-	router.Post("/", handler.Generate(linkService, logger.Log, config))
-	router.Post("/api/shorten", handler.GenerateJSON(linkService, logger.Log, config))
-	router.Post("/api/shorten/batch", handler.GenerateBatch(linkService, logger.Log, config))
+	router.Post("/", handler.Generate(linkService, logger.Log, cfg, broadcaster))
+	router.Post("/api/shorten", handler.GenerateJSON(linkService, logger.Log, cfg, broadcaster))
+	router.Post("/api/shorten/batch", handler.GenerateBatch(linkService, logger.Log, cfg))
 
-	router.Get("/api/user/urls", handler.ListUrls(linkService, logger.Log, config))
+	router.Get("/api/user/urls", handler.ListUrls(linkService, logger.Log, cfg))
 
-	router.Delete("/api/user/urls", handler.RemoveListUrls(linkService, logger.Log, config))
+	router.Delete("/api/user/urls", handler.RemoveListUrls(linkService, logger.Log, cfg))
 
 	return router
 }

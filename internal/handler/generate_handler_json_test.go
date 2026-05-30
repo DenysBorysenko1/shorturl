@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"shorturl/internal/audit"
 	"shorturl/internal/config"
 	appctx "shorturl/internal/context"
 	"shorturl/internal/handler"
@@ -150,7 +151,7 @@ func TestGenerateJSON(t *testing.T) {
 			request = request.WithContext(appctx.WithUserID(request.Context(), testUserID))
 
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GenerateJSON(svc, zap.NewNop(), config.Cfg))
+			h := http.HandlerFunc(handler.GenerateJSON(svc, zap.NewNop(), config.Cfg, audit.NewBroadcaster()))
 
 			h(w, request)
 

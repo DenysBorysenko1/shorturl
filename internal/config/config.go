@@ -14,6 +14,8 @@ type Config struct {
 	JWTSecret      string `env:"JWT_SECRET" envDefault:"secret"`
 	JWTExpiration  int    `env:"JWT_EXT" envDefault:"36000"`
 	LogLevel       string `env:"LOG_LEVEL" envDefault:"info"`
+	AuditFile      string `env:"AUDIT_FILE"`
+	AuditURL       string `env:"AUDIT_URL"`
 }
 
 var Cfg Config
@@ -25,6 +27,8 @@ func init() {
 	flag.StringVar(&Cfg.DatabaseDSN, "d", "", "Database connection path")
 	flag.StringVar(&Cfg.JWTSecret, "j", "", "JWT secret")
 	flag.IntVar(&Cfg.JWTExpiration, "e", 0, "JWT lifetime in seconds")
+	flag.StringVar(&Cfg.AuditFile, "audit-file", "", "Path to audit log file")
+	flag.StringVar(&Cfg.AuditURL, "audit-url", "", "URL of remote audit server")
 }
 
 func Load() {

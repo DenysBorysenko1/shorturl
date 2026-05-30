@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"shorturl/internal/audit"
 	"shorturl/internal/config"
 	"shorturl/internal/context"
 	"shorturl/internal/service"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 )
 
-func Generate(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config) http.HandlerFunc {
+func Generate(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config, broadcaster *audit.Broadcaster) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := context.UserID(r.Context())
@@ -46,6 +48,12 @@ func Generate(svc service.LinkServiceInterface, logger *zap.Logger, config confi
 				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(http.StatusConflict)
 				w.Write([]byte(config.BaseURL + "/" + conflictErr.ID))
+				broadcaster.Notify(audit.Event{
+					TS:     time.Now().Unix(),
+					Action: "shorten",
+					UserID: userID,
+					URL:    url,
+				})
 				return
 			}
 
@@ -56,6 +64,13 @@ func Generate(svc service.LinkServiceInterface, logger *zap.Logger, config confi
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(config.BaseURL + "/" + id))
+
+		broadcaster.Notify(audit.Event{
+			TS:     time.Now().Unix(),
+			Action: "shorten",
+			UserID: userID,
+			URL:    url,
+		})
 	}
 
 }

@@ -1,13 +1,16 @@
+
 package handler
 
 import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"shorturl/internal/audit"
 	"shorturl/internal/config"
 	"shorturl/internal/context"
 	"shorturl/internal/service"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -24,7 +27,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config) http.HandlerFunc {
+func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config, broadcaster *audit.Broadcaster) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		userID, ok := context.UserID(req.Context())
@@ -69,6 +72,12 @@ func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config c
 				_ = json.NewEncoder(w).Encode(Response{
 					Result: config.BaseURL + "/" + conflictErr.ID,
 				})
+				broadcaster.Notify(audit.Event{
+					TS:     time.Now().Unix(),
+					Action: "shorten",
+					UserID: userID,
+					URL:    url,
+				})
 				return
 			}
 
@@ -91,5 +100,12 @@ func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config c
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
+
+		broadcaster.Notify(audit.Event{
+			TS:     time.Now().Unix(),
+			Action: "shorten",
+			UserID: userID,
+			URL:    url,
+		})
 	}
 }

@@ -3,12 +3,14 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"shorturl/internal/audit"
 	"shorturl/internal/service"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
 
-func Retrieve(svc service.LinkServiceInterface) http.HandlerFunc {
+func Retrieve(svc service.LinkServiceInterface, broadcaster *audit.Broadcaster) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if id == "" {
@@ -30,6 +32,14 @@ func Retrieve(svc service.LinkServiceInterface) http.HandlerFunc {
 			http.Error(w, "Error while retrieving", http.StatusInternalServerError)
 			return
 		}
+
+		broadcaster.Notify(audit.Event{
+			TS:     time.Now().Unix(),
+			Action: "retrieve",
+			UserID: "",
+			URL:    url,
+		})
+
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	}
 }
