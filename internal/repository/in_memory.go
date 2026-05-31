@@ -27,7 +27,7 @@ func (repository *InMemoryRepository) CreateMany(entities []model.Link) (int, er
 
 	startIdx := len(repository.data)
 	repository.data = append(repository.data, entities...)
-	
+
 	for i, entity := range entities {
 		repository.index[entity.GetID()] = entity
 		userID := entity.GetCreatedBy()

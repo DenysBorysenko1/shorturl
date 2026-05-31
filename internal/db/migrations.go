@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	pgxv5 "github.com/golang-migrate/migrate/v4/database/pgx/v5"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func RunMigrations(db *sql.DB) error {
@@ -31,4 +31,3 @@ func RunMigrations(db *sql.DB) error {
 
 	return nil
 }
-
