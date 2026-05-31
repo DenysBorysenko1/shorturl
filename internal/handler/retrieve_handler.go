@@ -18,15 +18,17 @@ import (
 // the audit broadcaster.
 //
 // Request format:
-//   GET /{id}
+//
+//	GET /{id}
 //
 // Response formats:
-//   Success (307 Temporary Redirect):
-//     Location: https://example.com (the original URL)
 //
-//   Error (404 Not Found): Link not found
-//   Error (410 Gone): Link has been deleted
-//   Error (500 Internal Server Error): Internal server error
+//	Success (307 Temporary Redirect):
+//	  Location: https://example.com (the original URL)
+//
+//	Error (404 Not Found): Link not found
+//	Error (410 Gone): Link has been deleted
+//	Error (500 Internal Server Error): Internal server error
 //
 // Parameters:
 //   - svc: LinkServiceInterface for retrieving links

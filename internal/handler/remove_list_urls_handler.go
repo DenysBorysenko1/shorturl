@@ -18,16 +18,19 @@ import (
 // deletion task is enqueued.
 //
 // Request format:
-//   DELETE /api/user/urls
-//   Content-Type: application/json
-//   Body: ["abc123", "def456", "ghi789"]
+//
+//	DELETE /api/user/urls
+//	Content-Type: application/json
+//	Body: ["abc123", "def456", "ghi789"]
 //
 // Response format (202 Accepted):
-//   Deletion task has been enqueued for processing
+//
+//	Deletion task has been enqueued for processing
 //
 // Error responses:
-//   Error (400 Bad Request): Invalid JSON format
-//   Error (500 Internal Server Error): Internal server error
+//
+//	Error (400 Bad Request): Invalid JSON format
+//	Error (500 Internal Server Error): Internal server error
 //
 // Parameters:
 //   - linkService: LinkServiceInterface for deleting links

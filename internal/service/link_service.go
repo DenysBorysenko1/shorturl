@@ -50,7 +50,7 @@ type LinkService struct {
 
 var (
 	// ErrNotFound is returned when a link cannot be found.
-	ErrNotFound    = errors.New("not found")
+	ErrNotFound = errors.New("not found")
 	// ErrLinkDeleted is returned when attempting to retrieve a deleted link.
 	ErrLinkDeleted = errors.New("link deleted")
 )

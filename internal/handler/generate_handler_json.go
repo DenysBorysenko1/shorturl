@@ -37,25 +37,27 @@ type ErrorResponse struct {
 // with the authenticated user ID from the request context.
 //
 // Request format:
-//   POST /api/shorten
-//   Content-Type: application/json
-//   Body: {"url": "https://example.com"}
+//
+//	POST /api/shorten
+//	Content-Type: application/json
+//	Body: {"url": "https://example.com"}
 //
 // Response formats:
-//   Success (201 Created):
-//     Content-Type: application/json
-//     Body: {"result": "http://localhost:8080/abc123"}
 //
-//   Conflict (409 Conflict) - URL already exists:
-//     Content-Type: application/json
-//     Body: {"result": "http://localhost:8080/abc123"}
+//	Success (201 Created):
+//	  Content-Type: application/json
+//	  Body: {"result": "http://localhost:8080/abc123"}
 //
-//   Error (400 Bad Request):
-//     Content-Type: application/json
-//     Body: {"error": "error message"}
+//	Conflict (409 Conflict) - URL already exists:
+//	  Content-Type: application/json
+//	  Body: {"result": "http://localhost:8080/abc123"}
 //
-//   Error (405 Method Not Allowed): Only POST method is allowed
-//   Error (500 Internal Server Error): Internal server error
+//	Error (400 Bad Request):
+//	  Content-Type: application/json
+//	  Body: {"error": "error message"}
+//
+//	Error (405 Method Not Allowed): Only POST method is allowed
+//	Error (500 Internal Server Error): Internal server error
 //
 // Parameters:
 //   - svc: LinkServiceInterface for creating and managing links

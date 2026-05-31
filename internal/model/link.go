@@ -6,9 +6,9 @@ package model
 // the original URL, the user who created it, and its deletion status.
 type Link struct {
 	BaseEntity
-	URL       string `db:"url"`         // The original URL that was shortened
-	CreatedBy string `db:"created_by"`   // ID of the user who created this link
-	IsDeleted bool   `db:"is_deleted"`   // Whether the link has been soft-deleted
+	URL       string `db:"url"`        // The original URL that was shortened
+	CreatedBy string `db:"created_by"` // ID of the user who created this link
+	IsDeleted bool   `db:"is_deleted"` // Whether the link has been soft-deleted
 }
 
 // GetURL returns the original URL of the link.

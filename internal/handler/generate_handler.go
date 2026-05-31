@@ -23,22 +23,24 @@ import (
 // the request context.
 //
 // Request format:
-//   POST /shorten
-//   Content-Type: text/plain
-//   Body: https://example.com
+//
+//	POST /shorten
+//	Content-Type: text/plain
+//	Body: https://example.com
 //
 // Response formats:
-//   Success (201 Created):
-//     Content-Type: text/plain
-//     Body: http://localhost:8080/abc123
 //
-//   Conflict (409 Conflict) - URL already exists:
-//     Content-Type: text/plain
-//     Body: http://localhost:8080/abc123
+//	Success (201 Created):
+//	  Content-Type: text/plain
+//	  Body: http://localhost:8080/abc123
 //
-//   Error (400 Bad Request): URL is required
-//   Error (405 Method Not Allowed): Only POST method is allowed
-//   Error (500 Internal Server Error): Internal server error
+//	Conflict (409 Conflict) - URL already exists:
+//	  Content-Type: text/plain
+//	  Body: http://localhost:8080/abc123
+//
+//	Error (400 Bad Request): URL is required
+//	Error (405 Method Not Allowed): Only POST method is allowed
+//	Error (500 Internal Server Error): Internal server error
 //
 // Parameters:
 //   - svc: LinkServiceInterface for creating and managing links

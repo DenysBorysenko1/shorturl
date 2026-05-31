@@ -20,36 +20,39 @@ import (
 // context.
 //
 // Request format:
-//   POST /api/shorten/batch
-//   Content-Type: application/json
-//   Body: [
-//     {
-//       "correlation_id": "id1",
-//       "original_url": "https://example1.com"
-//     },
-//     {
-//       "correlation_id": "id2",
-//       "original_url": "https://example2.com"
-//     }
-//   ]
+//
+//	POST /api/shorten/batch
+//	Content-Type: application/json
+//	Body: [
+//	  {
+//	    "correlation_id": "id1",
+//	    "original_url": "https://example1.com"
+//	  },
+//	  {
+//	    "correlation_id": "id2",
+//	    "original_url": "https://example2.com"
+//	  }
+//	]
 //
 // Response format (201 Created):
-//   Content-Type: application/json
-//   Body: [
-//     {
-//       "correlation_id": "id1",
-//       "short_url": "http://localhost:8080/id1"
-//     },
-//     {
-//       "correlation_id": "id2",
-//       "short_url": "http://localhost:8080/id2"
-//     }
-//   ]
+//
+//	Content-Type: application/json
+//	Body: [
+//	  {
+//	    "correlation_id": "id1",
+//	    "short_url": "http://localhost:8080/id1"
+//	  },
+//	  {
+//	    "correlation_id": "id2",
+//	    "short_url": "http://localhost:8080/id2"
+//	  }
+//	]
 //
 // Error responses:
-//   Error (400 Bad Request): Invalid JSON or empty data
-//   Error (405 Method Not Allowed): Only POST method is allowed
-//   Error (500 Internal Server Error): Internal server error
+//
+//	Error (400 Bad Request): Invalid JSON or empty data
+//	Error (405 Method Not Allowed): Only POST method is allowed
+//	Error (500 Internal Server Error): Internal server error
 //
 // Parameters:
 //   - svc: LinkServiceInterface for batch creating links

@@ -18,26 +18,30 @@ import (
 // 204 No Content.
 //
 // Request format:
-//   GET /api/user/urls
+//
+//	GET /api/user/urls
 //
 // Response format (200 OK):
-//   Content-Type: application/json
-//   Body: [
-//     {
-//       "original_url": "https://example.com",
-//       "short_url": "http://localhost:8080/abc123"
-//     },
-//     {
-//       "original_url": "https://example2.com",
-//       "short_url": "http://localhost:8080/def456"
-//     }
-//   ]
+//
+//	Content-Type: application/json
+//	Body: [
+//	  {
+//	    "original_url": "https://example.com",
+//	    "short_url": "http://localhost:8080/abc123"
+//	  },
+//	  {
+//	    "original_url": "https://example2.com",
+//	    "short_url": "http://localhost:8080/def456"
+//	  }
+//	]
 //
 // Response format (204 No Content):
-//   User has no URLs created
+//
+//	User has no URLs created
 //
 // Error responses:
-//   Error (500 Internal Server Error): Internal server error
+//
+//	Error (500 Internal Server Error): Internal server error
 //
 // Parameters:
 //   - linkService: LinkServiceInterface for retrieving user links

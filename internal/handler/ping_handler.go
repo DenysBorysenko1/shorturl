@@ -19,11 +19,13 @@ import (
 // is applied to the database ping operation.
 //
 // Request format:
-//   GET /ping
+//
+//	GET /ping
 //
 // Response formats:
-//   Success (200 OK): Database connection is healthy
-//   Error (500 Internal Server Error): Database connection failed or timed out
+//
+//	Success (200 OK): Database connection is healthy
+//	Error (500 Internal Server Error): Database connection failed or timed out
 //
 // Parameters:
 //   - log: Logger for logging connection status
