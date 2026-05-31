@@ -14,18 +14,57 @@ import (
 	"go.uber.org/zap"
 )
 
+// Input represents the JSON request body for creating a short URL.
 type Input struct {
-	URL string `json:"url"`
+	URL string `json:"url"` // The original URL to shorten
 }
 
+// Response represents the JSON response containing the short URL.
 type Response struct {
-	Result string `json:"result"`
+	Result string `json:"result"` // The generated short URL
 }
 
+// ErrorResponse represents an error response in JSON format.
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Error string `json:"error"` // Error message describing what went wrong
 }
 
+// GenerateJSON creates and returns an HTTP handler for shortening URLs using JSON format.
+//
+// The handler accepts POST requests with a JSON body containing the original URL
+// and returns a JSON response with the shortened URL. If the URL already exists,
+// it returns the existing short URL with a 409 Conflict status. The URL is associated
+// with the authenticated user ID from the request context.
+//
+// Request format:
+//   POST /api/shorten
+//   Content-Type: application/json
+//   Body: {"url": "https://example.com"}
+//
+// Response formats:
+//   Success (201 Created):
+//     Content-Type: application/json
+//     Body: {"result": "http://localhost:8080/abc123"}
+//
+//   Conflict (409 Conflict) - URL already exists:
+//     Content-Type: application/json
+//     Body: {"result": "http://localhost:8080/abc123"}
+//
+//   Error (400 Bad Request):
+//     Content-Type: application/json
+//     Body: {"error": "error message"}
+//
+//   Error (405 Method Not Allowed): Only POST method is allowed
+//   Error (500 Internal Server Error): Internal server error
+//
+// Parameters:
+//   - svc: LinkServiceInterface for creating and managing links
+//   - logger: Logger for logging errors and information
+//   - config: Configuration containing BaseURL for building short URLs
+//   - broadcaster: Audit event broadcaster for tracking link creation events
+//
+// Returns:
+//   - http.HandlerFunc: Handler function for JSON-based URL shortening
 func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config, broadcaster *audit.Broadcaster) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {

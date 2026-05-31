@@ -15,6 +15,39 @@ import (
 	"go.uber.org/zap"
 )
 
+// Generate creates and returns an HTTP handler for shortening URLs.
+//
+// The handler accepts POST requests with a URL in the request body (plain text format)
+// and returns a shortened URL. If the URL already exists, it returns the existing short URL
+// with a 409 Conflict status. The URL is associated with the authenticated user ID from
+// the request context.
+//
+// Request format:
+//   POST /shorten
+//   Content-Type: text/plain
+//   Body: https://example.com
+//
+// Response formats:
+//   Success (201 Created):
+//     Content-Type: text/plain
+//     Body: http://localhost:8080/abc123
+//
+//   Conflict (409 Conflict) - URL already exists:
+//     Content-Type: text/plain
+//     Body: http://localhost:8080/abc123
+//
+//   Error (400 Bad Request): URL is required
+//   Error (405 Method Not Allowed): Only POST method is allowed
+//   Error (500 Internal Server Error): Internal server error
+//
+// Parameters:
+//   - svc: LinkServiceInterface for creating and managing links
+//   - logger: Logger for logging errors and information
+//   - config: Configuration containing BaseURL for building short URLs
+//   - broadcaster: Audit event broadcaster for tracking link creation events
+//
+// Returns:
+//   - http.HandlerFunc: Handler function for URL shortening
 func Generate(svc service.LinkServiceInterface, logger *zap.Logger, config config.Config, broadcaster *audit.Broadcaster) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
