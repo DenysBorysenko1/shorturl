@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"shorturl/internal/handler"
+	"shorturl/internal/service"
 	"shorturl/internal/service/mocks"
 	"testing"
 
@@ -69,6 +70,18 @@ func TestRetrieve(t *testing.T) {
 			},
 			want: want{
 				status:   http.StatusInternalServerError,
+				location: "",
+			},
+		},
+		{
+			name:   "deleted",
+			method: "GET",
+			path:   "/123",
+			getFunc: func(id string) (string, error) {
+				return "", service.ErrLinkDeleted
+			},
+			want: want{
+				status:   http.StatusGone,
 				location: "",
 			},
 		},
