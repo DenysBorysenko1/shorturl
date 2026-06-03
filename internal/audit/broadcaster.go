@@ -1,15 +1,21 @@
 package audit
 
-import "sync"
+import (
+	"sync"
+
+	"go.uber.org/zap"
+)
 
 type Broadcaster struct {
 	observers []Observer
+	logger    *zap.Logger
 	mu        sync.RWMutex
 }
 
-func NewBroadcaster() *Broadcaster {
+func NewBroadcaster(logger *zap.Logger) *Broadcaster {
 	return &Broadcaster{
 		observers: make([]Observer, 0),
+		logger:    logger,
 	}
 }
 
@@ -36,6 +42,13 @@ func (b *Broadcaster) Notify(event Event) {
 	defer b.mu.RUnlock()
 
 	for _, observer := range b.observers {
-		_ = observer.LogEvent(event)
+		if err := observer.LogEvent(event); err != nil {
+			b.logger.Error("observer failed to log event",
+				zap.Error(err),
+				zap.String("action", event.Action),
+				zap.String("userID", event.UserID),
+				zap.String("url", event.URL),
+			)
+		}
 	}
 }

@@ -61,7 +61,7 @@ func Retrieve(svc service.LinkServiceInterface, broadcaster *audit.Broadcaster) 
 
 		broadcaster.Notify(audit.Event{
 			TS:     time.Now().Unix(),
-			Action: "retrieve",
+			Action: "follow",
 			UserID: "",
 			URL:    url,
 		})

@@ -7,7 +7,6 @@ import (
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
 	"testing"
-	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
@@ -24,12 +23,12 @@ func TestProfileLoad(t *testing.T) {
 	repo := repository.NewInMemoryRepository[model.Link]()
 	svc := NewLinkService(repo, *logger)
 
-	fmt.Println("Generating 10,000 short URLs...")
+	t.Log("Generating 10,000 short URLs...")
 	ids := make([]string, 10000)
 	for i := 0; i < 10000; i++ {
 		id, err := generateID()
 		if err != nil {
-			fmt.Printf("Error generating ID: %v\n", err)
+			t.Errorf("Error generating ID: %v", err)
 			continue
 		}
 		ids[i] = id
@@ -40,32 +39,32 @@ func TestProfileLoad(t *testing.T) {
 			CreatedBy:  "user123",
 		}
 		if err := repo.Create(link); err != nil {
-			fmt.Printf("Error creating link: %v\n", err)
+			t.Errorf("Error creating link: %v", err)
 		}
 	}
 
-	fmt.Println("Performing 10,000 get operations...")
+	t.Log("Performing 10,000 get operations...")
 	for i := 0; i < 10000; i++ {
 		_, err := svc.Get(ids[i])
 		if err != nil {
-			fmt.Printf("Error getting link: %v\n", err)
+			t.Errorf("Error getting link: %v", err)
 		}
 	}
 
-	fmt.Println("Performing 1,000 GetAllByUserID operations...")
+	t.Log("Performing 1,000 GetAllByUserID operations...")
 	for i := 0; i < 1000; i++ {
 		_, err := svc.GetAllByUserID("user123")
 		if err != nil {
-			fmt.Printf("Error getting all links: %v\n", err)
+			t.Errorf("Error getting all links: %v", err)
 		}
 	}
 
-	fmt.Println("Performing 100 batch operations...")
+	t.Log("Performing 100 batch operations...")
 	batch := make([]model.Link, 100)
 	for i := 0; i < 100; i++ {
 		id, err := generateID()
 		if err != nil {
-			fmt.Printf("Error generating ID: %v\n", err)
+			t.Errorf("Error generating ID: %v", err)
 			continue
 		}
 		batch[i] = model.Link{
@@ -76,21 +75,29 @@ func TestProfileLoad(t *testing.T) {
 	}
 	for i := 0; i < 100; i++ {
 		if err := svc.CreateMany(batch); err != nil {
-			fmt.Printf("Error creating batch: %v\n", err)
+			t.Errorf("Error creating batch: %v", err)
 		}
 	}
 
-	fmt.Println("Performing delete operations...")
+	t.Log("Performing delete operations...")
 	deleteIDs := ids[:1000]
 	for i := 0; i < 10; i++ {
 		if err := svc.EnqueueDelete(deleteIDs, "user123"); err != nil {
-			fmt.Printf("Error enqueueing delete: %v\n", err)
+			t.Errorf("Error enqueueing delete: %v", err)
 		}
 	}
 
-	time.Sleep(2 * time.Second)
+	t.Log("Waiting for delete operations to complete...")
+	for _, id := range deleteIDs[:10] {
+		link, err := repo.GetByID(id)
+		if err == nil {
+			if !link.IsDeleted {
+				t.Logf("Link %s is not yet deleted", id)
+			}
+		}
+	}
 
-	fmt.Println("Workload completed")
+	t.Log("Workload completed")
 }
 
 func generateID() (string, error) {

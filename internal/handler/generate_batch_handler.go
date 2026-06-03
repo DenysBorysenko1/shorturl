@@ -72,14 +72,6 @@ func GenerateBatch(svc service.LinkServiceInterface, logger *zap.Logger, config 
 			return
 		}
 
-		if req.Method != http.MethodPost {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusMethodNotAllowed)
-
-			_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Only POST"})
-			return
-		}
-
 		var inputItems []dto.RequestBatchItem
 		if err := json.NewDecoder(req.Body).Decode(&inputItems); err != nil {
 			w.Header().Set("Content-Type", "application/json")

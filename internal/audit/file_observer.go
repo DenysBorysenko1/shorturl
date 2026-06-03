@@ -30,27 +30,23 @@ func NewFileObserver(filePath string) (*FileObserver, error) {
 }
 
 func (f *FileObserver) LogEvent(event Event) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	if f.file == nil {
-		file, err := os.OpenFile(f.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return fmt.Errorf("failed to reopen audit file: %w", err)
-		}
-		f.file = file
-	}
-
 	data, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal event: %w", err)
 	}
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
 
 	if _, err := f.file.Write(append(data, '\n')); err != nil {
 		return fmt.Errorf("failed to write to audit file: %w", err)
 	}
 
 	return nil
+}
+
+func (f *FileObserver) Shutdown() error {
+	return f.Close()
 }
 
 func (f *FileObserver) Close() error {

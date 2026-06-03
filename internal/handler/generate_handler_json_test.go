@@ -57,22 +57,6 @@ func TestGenerateJSON(t *testing.T) {
 			},
 		},
 		{
-			name:   "incorrect method",
-			method: "GET",
-			path:   "/",
-			id:     "",
-			request: handler.Input{
-				URL: "https://yandex.ru",
-			},
-			want: want{
-				status:      http.StatusMethodNotAllowed,
-				contentType: "application/json",
-				errorResponse: &handler.ErrorResponse{
-					Error: "Only POST",
-				},
-			},
-		},
-		{
 			name:   "not pass param",
 			method: "POST",
 			path:   "/",
@@ -151,7 +135,7 @@ func TestGenerateJSON(t *testing.T) {
 			request = request.WithContext(appctx.WithUserID(request.Context(), testUserID))
 
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GenerateJSON(svc, zap.NewNop(), config.Cfg, audit.NewBroadcaster()))
+			h := http.HandlerFunc(handler.GenerateJSON(svc, zap.NewNop(), config.Cfg, audit.NewBroadcaster(zap.NewNop())))
 
 			h(w, request)
 

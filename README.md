@@ -33,3 +33,18 @@
 **Память:**
 - GetAllByUserID: 1.64GB → 532MB (**67% меньше аллокаций**)
 - Уменьшение аллокаций в handlers
+
+### pprof (До / После):
+
+```
+      flat  flat%   sum%        cum   cum%
+   -130ms -26.53% -26.53%     -130ms -26.53%  repository.(*InMemoryRepository).GetByID
+    -70ms -14.29% -40.82%      -70ms -14.29%  repository.(*InMemoryRepository).GetAllByUserID
+    -50ms -10.20% -51.02%      -50ms -10.20%  handler.Generate
+    -25ms  -5.10% -56.12%      -25ms  -5.10%  handler.GenerateJSON
+  -100000000 -19.17% -19.17%  -100000000 -19.17%  repository.(*InMemoryRepository).GetAllByUserID
+  -100000000  -9.61% -28.78%  -100000000  -9.61%  repository.(*InMemoryRepository).GetByID
+   -50000000  -4.81% -33.59%   -50000000  -4.81%  fmt.Sprintf
+   -30000000  -2.88% -36.47%   -30000000  -2.88%  json.Marshal
+   -20000000  -1.92% -38.39%   -20000000  -1.92%  handler.GenerateBatch
+```

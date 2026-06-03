@@ -19,7 +19,7 @@ func BenchmarkLinkService_Create(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, err := svc.Create("https://example.com/test-url", "user123")
 		if err != nil {
 			b.Fatalf("Create failed: %v", err)
@@ -42,7 +42,7 @@ func BenchmarkLinkService_Get(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, err := svc.Get(id)
 		if err != nil {
 			b.Fatalf("Get failed: %v", err)
@@ -70,7 +70,7 @@ func BenchmarkLinkService_CreateMany(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		err := svc.CreateMany(links)
 		if err != nil {
 			b.Fatalf("CreateMany failed: %v", err)
@@ -95,7 +95,7 @@ func BenchmarkLinkService_GetAllByUserID(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, err := svc.GetAllByUserID("user123")
 		if err != nil {
 			b.Fatalf("GetAllByUserID failed: %v", err)

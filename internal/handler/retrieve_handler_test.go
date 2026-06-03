@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestRetrieve(t *testing.T) {
@@ -106,7 +107,7 @@ func TestRetrieve(t *testing.T) {
 				},
 			}
 			r := chi.NewRouter()
-			r.Get("/{id}", handler.Retrieve(svc, audit.NewBroadcaster()))
+			r.Get("/{id}", handler.Retrieve(svc, audit.NewBroadcaster(zap.NewNop())))
 			request := httptest.NewRequest(test.method, "http://localhost"+test.path, nil)
 			recorder := httptest.NewRecorder()
 			r.ServeHTTP(recorder, request)

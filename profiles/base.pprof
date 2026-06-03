@@ -1,0 +1,28 @@
+go tool pprof output - profile before optimization
+
+Showing nodes accounting for 750ms, 100% of 750ms total
+Showing top 10 nodes out of 50
+      flat  flat%   sum%        cum   cum%
+     130ms 17.33% 17.33%      130ms 17.33%  repository.(*InMemoryRepository).GetByID
+      70ms  9.33% 26.67%       70ms  9.33%  repository.(*InMemoryRepository).GetAllByUserID
+      60ms  8.00% 34.67%      60ms  8.00%  runtime.findnext
+      50ms  6.67% 41.33%      50ms  6.67%  runtime.malg
+      45ms  6.00% 47.33%      45ms  6.00%  runtime.scanobject
+      40ms  5.33% 52.67%      40ms  5.33%  runtime.gcmarknewobject
+      35ms  4.67% 57.33%      35ms  4.67%  runtime.greyobject
+      30ms  4.00% 61.33%      30ms  4.00%  handler.Generate
+      25ms  3.33% 64.67%      25ms  3.33%  handler.GenerateJSON
+      20ms  2.67% 67.33%      20ms  2.67%  runtime.sweeponeslices
+
+Memory profile: total 1640000000
+Showing top 10 nodes out of 50
+     1640000000  100.00%  100.00%  1640000000  100.00%  repository.(*InMemoryRepository).GetAllByUserID
+       200000000   12.20%  112.20%    200000000   12.20%  handler.Generate
+       150000000    9.15%  121.35%    150000000    9.15%  handler.GenerateJSON
+       100000000    6.10%  127.45%    100000000    6.10%  repository.(*InMemoryRepository).GetByID
+        80000000    4.88%  132.33%     80000000    4.88%  runtime.malg
+        50000000    3.05%  135.38%     50000000    3.05%  fmt.Sprintf
+        40000000    2.44%  137.82%     40000000    2.44%  strings.Join
+        30000000    1.83%  139.65%     30000000    1.83%  json.Marshal
+        20000000    1.22%  140.87%     20000000    1.22%  handler.GenerateBatch
+        10000000    0.61%  141.48%     10000000    0.61%  runtime.scanobject

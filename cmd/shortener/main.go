@@ -70,7 +70,7 @@ func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Lin
 }
 
 func initializeAuditBroadcaster(logger zap.Logger) *audit.Broadcaster {
-	broadcaster := audit.NewBroadcaster()
+	broadcaster := audit.NewBroadcaster(&logger)
 
 	if config.Cfg.AuditFile != "" {
 		fileObserver, err := audit.NewFileObserver(config.Cfg.AuditFile)

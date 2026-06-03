@@ -132,7 +132,7 @@ func TestGenerate(t *testing.T) {
 			request = request.WithContext(appctx.WithUserID(request.Context(), testUserID))
 
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.Generate(svc, zap.NewNop(), config.Cfg, audit.NewBroadcaster()))
+			h := http.HandlerFunc(handler.Generate(svc, zap.NewNop(), config.Cfg, audit.NewBroadcaster(zap.NewNop())))
 
 			h(w, request)
 
