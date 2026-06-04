@@ -50,9 +50,9 @@ These check for:
 
 ## Custom Analyzers
 
-- **noexit**: Prohibits direct calls to os.Exit in the main function of package main.
-  This encourages proper error handling and graceful shutdown.
-  Use logger.Fatal or os.Exit in cleanup functions instead.
+  - **noexit**: Prohibits direct calls to os.Exit in the main function of package main.
+    This encourages proper error handling and graceful shutdown.
+    Use logger.Fatal or os.Exit in cleanup functions instead.
 
 # Configuration
 
@@ -95,18 +95,18 @@ func main() {
 	// Combine all analyzers
 	analyzers := []*analysis.Analyzer{
 		// Standard Go analyzers
-		atomic.Analyzer,             // sync/atomic usage
-		bools.Analyzer,              // boolean operator mistakes
-		composite.Analyzer,          // unkeyed composite literals
-		copylock.Analyzer,           // locks passed by value
-		httpresponse.Analyzer,       // HTTP response mistakes
-		loopclosure.Analyzer,        // loop variable capture
-		nilfunc.Analyzer,            // nil function comparisons
-		printf.Analyzer,             // printf format strings
-		shadow.Analyzer,             // shadowed variables
-		stdmethods.Analyzer,         // standard interface methods
-		structtag.Analyzer,          // struct tag format
-		tests.Analyzer,              // test code mistakes
+		atomic.Analyzer,       // sync/atomic usage
+		bools.Analyzer,        // boolean operator mistakes
+		composite.Analyzer,    // unkeyed composite literals
+		copylock.Analyzer,     // locks passed by value
+		httpresponse.Analyzer, // HTTP response mistakes
+		loopclosure.Analyzer,  // loop variable capture
+		nilfunc.Analyzer,      // nil function comparisons
+		printf.Analyzer,       // printf format strings
+		shadow.Analyzer,       // shadowed variables
+		stdmethods.Analyzer,   // standard interface methods
+		structtag.Analyzer,    // struct tag format
+		tests.Analyzer,        // test code mistakes
 
 		// Custom analyzer
 		noexit.Analyzer, // prohibit os.Exit in main function

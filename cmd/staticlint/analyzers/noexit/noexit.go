@@ -101,7 +101,6 @@ func checkOsExitCall(pass *analysis.Pass, n ast.Node, stack []ast.Node) {
 	}
 }
 
-
 // isMainFunc checks if the function declaration is the main function.
 func isMainFunc(fn *ast.FuncDecl) bool {
 	// Safety check
