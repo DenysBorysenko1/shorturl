@@ -18,7 +18,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error getting working directory: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	// Go up two directories (from cmd/reset to project root)
 	if strings.HasSuffix(rootDir, "/cmd/reset") || strings.HasSuffix(rootDir, "\\cmd\\reset") {
 		rootDir = filepath.Dir(filepath.Dir(rootDir))
