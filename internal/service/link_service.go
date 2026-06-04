@@ -1,3 +1,5 @@
+// Package service provides business logic for URL shortening operations.
+// It includes services for link management with async deletion support.
 package service
 
 import (

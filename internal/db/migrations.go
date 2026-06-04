@@ -1,3 +1,5 @@
+// Package db provides database migration functionality
+// using golang-migrate to manage schema changes.
 package db
 
 import (

@@ -1,3 +1,7 @@
+// Package config provides configuration management for the application.
+// It loads configuration from command-line flags and environment variables,
+// with support for server settings, database connections, storage options,
+// JWT authentication, logging, and audit configuration.
 package config
 
 import (

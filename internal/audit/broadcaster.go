@@ -1,3 +1,7 @@
+// Package audit provides event broadcasting and observation capabilities
+// for tracking and logging application events.
+// It supports multiple observers (file, HTTP, etc.) that receive
+// events asynchronously through a broadcaster pattern.
 package audit
 
 import (

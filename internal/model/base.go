@@ -1,3 +1,5 @@
+// Package model provides data structures and entities
+// for the application, including base entities and domain models.
 package model
 
 // BaseEntity provides a common ID field for all entities.

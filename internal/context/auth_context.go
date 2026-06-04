@@ -1,3 +1,5 @@
+// Package context provides context utilities for managing
+// user authentication context throughout the application.
 package context
 
 import "context"

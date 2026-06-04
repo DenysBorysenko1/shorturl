@@ -1,3 +1,6 @@
+// Package repository provides generic data storage interfaces
+// and implementations (in-memory, file, PostgreSQL) for entities.
+// It supports CRUD operations with user-specific queries and soft delete.
 package repository
 
 // Entity defines the interface for entities that can be stored in a repository.

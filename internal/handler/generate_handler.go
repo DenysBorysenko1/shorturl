@@ -1,3 +1,5 @@
+// Package handler provides HTTP handlers for URL shortening operations.
+// It includes handlers for creating, retrieving, listing, and deleting short links.
 package handler
 
 import (

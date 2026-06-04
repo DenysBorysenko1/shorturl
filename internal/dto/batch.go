@@ -1,3 +1,5 @@
+// Package dto provides data transfer objects for the API.
+// It includes structures for batch URL shortening requests and responses.
 package dto
 
 // RequestBatchItem represents an item in a batch shortening request.
