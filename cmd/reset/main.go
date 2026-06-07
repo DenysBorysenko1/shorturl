@@ -224,14 +224,14 @@ func generateResetFile(pkgName string, structs []*StructInfo) string {
 		Structs     []struct {
 			Name   string
 			Fields []struct {
-				Name                string
-				IsPointerType      bool
+				Name                 string
+				IsPointerType        bool
 				IsPointerToBasicType bool
-				IsSliceType         bool
-				IsMapType           bool
-				IsBasicType         bool
-				ZeroValue           string
-				ResetCode           string
+				IsSliceType          bool
+				IsMapType            bool
+				IsBasicType          bool
+				ZeroValue            string
+				ResetCode            string
 			}
 		}
 	}{
@@ -242,14 +242,14 @@ func generateResetFile(pkgName string, structs []*StructInfo) string {
 		structData := struct {
 			Name   string
 			Fields []struct {
-				Name                string
-				IsPointerType      bool
+				Name                 string
+				IsPointerType        bool
 				IsPointerToBasicType bool
-				IsSliceType         bool
-				IsMapType           bool
-				IsBasicType         bool
-				ZeroValue           string
-				ResetCode           string
+				IsSliceType          bool
+				IsMapType            bool
+				IsBasicType          bool
+				ZeroValue            string
+				ResetCode            string
 			}
 		}{
 			Name: s.Name,
@@ -258,21 +258,21 @@ func generateResetFile(pkgName string, structs []*StructInfo) string {
 		for _, field := range s.Fields {
 			fieldType := getTypeString(field.TypeExpr)
 			fieldData := struct {
-				Name                string
-				IsPointerType      bool
+				Name                 string
+				IsPointerType        bool
 				IsPointerToBasicType bool
-				IsSliceType         bool
-				IsMapType           bool
-				IsBasicType         bool
-				ZeroValue           string
-				ResetCode           string
+				IsSliceType          bool
+				IsMapType            bool
+				IsBasicType          bool
+				ZeroValue            string
+				ResetCode            string
 			}{
-				Name:           field.Name,
-				IsPointerType:  isPointerType(field.TypeExpr),
-				IsSliceType:    isSliceType(field.TypeExpr),
-				IsMapType:      isMapType(field.TypeExpr),
-				IsBasicType:    isBasicType(fieldType),
-				ZeroValue:      getZeroValue(strings.TrimPrefix(fieldType, "*")),
+				Name:          field.Name,
+				IsPointerType: isPointerType(field.TypeExpr),
+				IsSliceType:   isSliceType(field.TypeExpr),
+				IsMapType:     isMapType(field.TypeExpr),
+				IsBasicType:   isBasicType(fieldType),
+				ZeroValue:     getZeroValue(strings.TrimPrefix(fieldType, "*")),
 			}
 
 			if fieldData.IsPointerType {
