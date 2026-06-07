@@ -11,7 +11,6 @@ package noexit
 
 import (
 	"go/ast"
-	"os"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -130,6 +129,3 @@ func isMainFunc(fn *ast.FuncDecl) bool {
 
 	return true
 }
-
-// Ensure os package is imported
-var _ = os.Exit

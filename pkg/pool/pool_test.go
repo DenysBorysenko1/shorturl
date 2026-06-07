@@ -3,27 +3,31 @@ package pool
 import (
 	"sync"
 	"testing"
+
+	"go.uber.org/mock/gomock"
 )
 
-type MockResetter struct {
-	Value int
+type countResetter struct {
+	count int
+	data  []string
 }
 
-func (m *MockResetter) Reset() {
-	m.Value = 0
+func (c *countResetter) Reset() {
+	c.count++
+	c.data = nil
 }
 
-type ResettableSlice struct {
+type sliceResetter struct {
 	data []string
 }
 
-func (r *ResettableSlice) Reset() {
-	r.data = nil
+func (s *sliceResetter) Reset() {
+	s.data = nil
 }
 
 func TestPool_New(t *testing.T) {
-	factory := func() *MockResetter {
-		return &MockResetter{Value: 42}
+	factory := func() *countResetter {
+		return &countResetter{}
 	}
 
 	p := New(factory)
@@ -34,8 +38,8 @@ func TestPool_New(t *testing.T) {
 }
 
 func TestPool_Get(t *testing.T) {
-	factory := func() *MockResetter {
-		return &MockResetter{Value: 42}
+	factory := func() *countResetter {
+		return &countResetter{data: []string{"a", "b"}}
 	}
 
 	p := New(factory)
@@ -46,36 +50,34 @@ func TestPool_Get(t *testing.T) {
 		t.Fatal("Get returned nil")
 	}
 
-	if item.Value != 42 {
-		t.Errorf("Expected Value 42, got %d", item.Value)
+	if len(item.data) != 2 {
+		t.Errorf("Expected len 2, got %d", len(item.data))
 	}
 }
 
 func TestPool_Put(t *testing.T) {
-	factory := func() *MockResetter {
-		return &MockResetter{Value: 0}
+	factory := func() *countResetter {
+		return &countResetter{data: []string{"a", "b"}}
 	}
 
 	p := New(factory)
 
 	item := p.Get()
-	item.Value = 100
+	item.data = append(item.data, "c")
 
 	p.Put(item)
 
-	if item.Value != 0 {
-		t.Errorf("Expected Value 0 after Reset, got %d", item.Value)
+	if item.data != nil {
+		t.Errorf("Expected data to be nil after Reset, got %v", item.data)
 	}
-
-	item2 := p.Get()
-	if item == item2 {
-		t.Log("Pool reuses objects correctly")
+	if item.count != 1 {
+		t.Errorf("Expected count to be 1 after Reset, got %d", item.count)
 	}
 }
 
 func TestPool_Concurrent(t *testing.T) {
-	factory := func() *MockResetter {
-		return &MockResetter{Value: 42}
+	factory := func() *countResetter {
+		return &countResetter{data: []string{"a", "b"}}
 	}
 
 	p := New(factory)
@@ -89,7 +91,7 @@ func TestPool_Concurrent(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < iterations; j++ {
 				item := p.Get()
-				item.Value = j
+				item.data = []string{"test"}
 				p.Put(item)
 			}
 		}()
@@ -101,8 +103,8 @@ func TestPool_Concurrent(t *testing.T) {
 }
 
 func TestPool_WithDifferentTypes(t *testing.T) {
-	resettableFactory := func() *ResettableSlice {
-		return &ResettableSlice{
+	resettableFactory := func() *sliceResetter {
+		return &sliceResetter{
 			data: []string{"a", "b", "c"},
 		}
 	}
@@ -118,4 +120,42 @@ func TestPool_WithDifferentTypes(t *testing.T) {
 	if len(item.data) != 0 {
 		t.Errorf("Expected len 0 after Reset, got %d", len(item.data))
 	}
+}
+
+func TestPool_NilFactory(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected panic when factory is nil, but got none")
+		} else if r != "pool: factory function cannot be nil" {
+			t.Errorf("Expected panic message 'pool: factory function cannot be nil', got '%v'", r)
+		}
+	}()
+
+	New[*countResetter](nil)
+	t.Error("Test should have panicked")
+}
+
+func TestPool_WithMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockResetter := NewMockResetter(ctrl)
+	mockResetter.EXPECT().Reset().Times(2)
+
+	callCount := 0
+	factory := func() Resetter {
+		callCount++
+		if callCount == 1 {
+			return mockResetter
+		}
+		return mockResetter
+	}
+
+	p := New(factory)
+
+	item := p.Get()
+	p.Put(item)
+
+	item2 := p.Get()
+	p.Put(item2)
 }
