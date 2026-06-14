@@ -20,6 +20,9 @@ type Config struct {
 	LogLevel       string `env:"LOG_LEVEL" envDefault:"info"`
 	AuditFile      string `env:"AUDIT_FILE"`
 	AuditURL       string `env:"AUDIT_URL"`
+	EnableHTTPS    bool   `env:"ENABLE_HTTPS"`
+	TLSCertFile    string `env:"TLS_CERT_FILE" envDefault:"certs/cert.pem"`
+	TLSKeyFile     string `env:"TLS_KEY_FILE" envDefault:"certs/key.pem"`
 }
 
 var Cfg Config
@@ -33,6 +36,9 @@ func init() {
 	flag.IntVar(&Cfg.JWTExpiration, "e", 0, "JWT lifetime in seconds")
 	flag.StringVar(&Cfg.AuditFile, "audit-file", "", "Path to audit log file")
 	flag.StringVar(&Cfg.AuditURL, "audit-url", "", "URL of remote audit server")
+	flag.BoolVar(&Cfg.EnableHTTPS, "s", false, "Enable HTTPS (true/false)")
+	flag.StringVar(&Cfg.TLSCertFile, "c", "", "Path to TLS certificate file")
+	flag.StringVar(&Cfg.TLSKeyFile, "k", "", "Path to TLS private key file")
 }
 
 func Load() {

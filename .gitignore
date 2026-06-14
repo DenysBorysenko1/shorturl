@@ -14,8 +14,8 @@
 # Binaries
 cmd/shortener/main
 cmd/shortener/shortener
-./shortener
-./staticlint
+shortener
+staticlint
 
 # Dependency directories (remove the comment below to include it)
 vendor/
@@ -29,3 +29,6 @@ docker/volumes/*
 cover.html
 
 links.json
+
+# TLS certificates
+certs/*.pem

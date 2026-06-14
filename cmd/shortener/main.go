@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -42,8 +43,38 @@ func main() {
 	router := newRouter(linkService, config.Cfg, broadcaster)
 
 	logger.Log.Info("Starting server at", zap.String("address", config.Cfg.ServerAddress))
+
+	if config.Cfg.EnableHTTPS {
+		startHTTPSServer(logger.Log, router)
+	} else {
+		startHTTPServer(logger.Log, router)
+	}
+}
+
+func startHTTPServer(logger *zap.Logger, router chi.Router) {
 	if err := http.ListenAndServe(config.Cfg.ServerAddress, router); err != nil {
-		logger.Log.Fatal("Server stopped with error", zap.Error(err))
+		logger.Fatal("HTTP server stopped with error", zap.Error(err))
+	}
+}
+
+func startHTTPSServer(logger *zap.Logger, router chi.Router) {
+	logger.Info("HTTPS mode enabled",
+		zap.String("cert_file", config.Cfg.TLSCertFile),
+		zap.String("key_file", config.Cfg.TLSKeyFile),
+	)
+
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	server := &http.Server{
+		Addr:      config.Cfg.ServerAddress,
+		Handler:   router,
+		TLSConfig: tlsConfig,
+	}
+
+	if err := server.ListenAndServeTLS(config.Cfg.TLSCertFile, config.Cfg.TLSKeyFile); err != nil {
+		logger.Fatal("HTTPS server stopped with error", zap.Error(err))
 	}
 }
 
