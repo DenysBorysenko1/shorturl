@@ -1,10 +1,16 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"shorturl/internal/audit"
 	"shorturl/internal/config"
 	dbpkg "shorturl/internal/db"
@@ -44,21 +50,66 @@ func main() {
 
 	logger.Log.Info("Starting server at", zap.String("address", config.Cfg.ServerAddress))
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	var srv *http.Server
 	if config.Cfg.EnableHTTPS {
-		startHTTPSServer(logger.Log, router)
+		srv = createHTTPSServer(router)
 	} else {
-		startHTTPServer(logger.Log, router)
+		srv = createHTTPServer(router)
+	}
+
+	go func() {
+		var err error
+		if config.Cfg.EnableHTTPS {
+			err = srv.ListenAndServeTLS(config.Cfg.TLSCertFile, config.Cfg.TLSKeyFile)
+		} else {
+			err = srv.ListenAndServe()
+		}
+		if err != nil && err != http.ErrServerClosed {
+			logger.Log.Fatal("Server stopped with error", zap.Error(err))
+		}
+	}()
+
+	sig := <-quit
+	logger.Log.Info("Received signal, shutting down gracefully", zap.String("signal", sig.String()))
+
+	const shutdownTimeout = 30 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Log.Error("Server shutdown error", zap.Error(err))
+	}
+	logger.Log.Info("HTTP server stopped")
+
+	linkService.Close()
+	logger.Log.Info("Link service closed")
+
+	broadcaster.Close()
+	logger.Log.Info("Audit broadcaster closed")
+
+	if sqlDB, ok := linkRepository.(interface{ Close() error }); ok {
+		if err := sqlDB.Close(); err != nil {
+			logger.Log.Error("Database close error", zap.Error(err))
+		} else {
+			logger.Log.Info("Database connection closed")
+		}
+	}
+
+	logger.Log.Info("Server shutdown complete")
+}
+
+func createHTTPServer(router chi.Router) *http.Server {
+	return &http.Server{
+		Addr:    config.Cfg.ServerAddress,
+		Handler: router,
 	}
 }
 
-func startHTTPServer(logger *zap.Logger, router chi.Router) {
-	if err := http.ListenAndServe(config.Cfg.ServerAddress, router); err != nil {
-		logger.Fatal("HTTP server stopped with error", zap.Error(err))
-	}
-}
-
-func startHTTPSServer(logger *zap.Logger, router chi.Router) {
-	logger.Info("HTTPS mode enabled",
+func createHTTPSServer(router chi.Router) *http.Server {
+	logger.Log.Info("HTTPS mode enabled",
 		zap.String("cert_file", config.Cfg.TLSCertFile),
 		zap.String("key_file", config.Cfg.TLSKeyFile),
 	)
@@ -67,14 +118,10 @@ func startHTTPSServer(logger *zap.Logger, router chi.Router) {
 		MinVersion: tls.VersionTLS12,
 	}
 
-	server := &http.Server{
+	return &http.Server{
 		Addr:      config.Cfg.ServerAddress,
 		Handler:   router,
 		TLSConfig: tlsConfig,
-	}
-
-	if err := server.ListenAndServeTLS(config.Cfg.TLSCertFile, config.Cfg.TLSKeyFile); err != nil {
-		logger.Fatal("HTTPS server stopped with error", zap.Error(err))
 	}
 }
 
