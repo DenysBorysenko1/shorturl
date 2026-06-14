@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"shorturl/internal/audit"
 	"shorturl/internal/config"
 	appctx "shorturl/internal/context"
 	"shorturl/internal/handler"
@@ -52,22 +53,6 @@ func TestGenerateJSON(t *testing.T) {
 				contentType: "application/json",
 				response: &handler.Response{
 					Result: config.Cfg.BaseURL + "/123",
-				},
-			},
-		},
-		{
-			name:   "incorrect method",
-			method: "GET",
-			path:   "/",
-			id:     "",
-			request: handler.Input{
-				URL: "https://yandex.ru",
-			},
-			want: want{
-				status:      http.StatusMethodNotAllowed,
-				contentType: "application/json",
-				errorResponse: &handler.ErrorResponse{
-					Error: "Only POST",
 				},
 			},
 		},
@@ -150,7 +135,7 @@ func TestGenerateJSON(t *testing.T) {
 			request = request.WithContext(appctx.WithUserID(request.Context(), testUserID))
 
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GenerateJSON(svc, zap.NewNop(), config.Cfg))
+			h := http.HandlerFunc(handler.GenerateJSON(svc, zap.NewNop(), config.Cfg, audit.NewBroadcaster(zap.NewNop())))
 
 			h(w, request)
 

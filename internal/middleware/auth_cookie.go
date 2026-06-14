@@ -1,3 +1,5 @@
+// Package middleware provides HTTP middleware components
+// including authentication (JWT cookies) and response compression.
 package middleware
 
 import (

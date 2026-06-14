@@ -1,3 +1,5 @@
+// Package mocks provides mock implementations for testing
+// the service layer, particularly the LinkServiceInterface.
 package mocks
 
 import "shorturl/internal/model"

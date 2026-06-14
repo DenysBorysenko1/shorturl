@@ -1,3 +1,5 @@
+// Package logger provides HTTP request/response logging middleware
+// using zap for structured logging and monitoring.
 package logger
 
 import (

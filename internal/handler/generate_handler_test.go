@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"shorturl/internal/audit"
 	"shorturl/internal/config"
 	appctx "shorturl/internal/context"
 	"shorturl/internal/handler"
@@ -131,7 +132,7 @@ func TestGenerate(t *testing.T) {
 			request = request.WithContext(appctx.WithUserID(request.Context(), testUserID))
 
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.Generate(svc, zap.NewNop(), config.Cfg))
+			h := http.HandlerFunc(handler.Generate(svc, zap.NewNop(), config.Cfg, audit.NewBroadcaster(zap.NewNop())))
 
 			h(w, request)
 

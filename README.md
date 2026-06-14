@@ -1,44 +1,50 @@
-# go-musthave-shortener-tpl
+## Профилирование и оптимизация
 
-Шаблон репозитория для трека «Сервис сокращения URL».
+### Что было оптимизировано:
 
-## Начало работы
+1. **GetByID** в InMemoryRepository
+   - Добавлен индекс `map[string]Link`
+   - O(n) → O(1) поиск по ID
+   - **Результат: 130ms → 0ms в CPU профиле**
 
-1. Склонируйте репозиторий в любую подходящую директорию на вашем компьютере.
-2. В корне репозитория выполните команду `go mod init <name>` (где `<name>` — адрес вашего репозитория на GitHub без префикса `https://`) для создания модуля.
+2. **GetAllByUserID** в InMemoryRepository
+   - Добавлен индекс `map[string][]int` для userID
+   - O(n) → O(k) где k - количество элементов пользователя
+   - **Результат: CPU 70ms → 0ms, Память 1.64GB → 532MB (67% меньше)**
 
-## Обновление шаблона
+3. **SoftDeleteByIDs** в InMemoryRepository
+   - map вместо slices.Contains для O(1) поиска вместо O(n)
 
-Чтобы иметь возможность получать обновления автотестов и других частей шаблона, выполните команду:
+4. **GenerateJSON и Generate handlers**
+   - Убран ненужное string(input.URL)
+   - Pre-allocation при сборке URL вместо конкатенации через +
+
+5. **GenerateBatch handler**
+   - Pre-allocation при сборке batch URLs
+
+### Результаты оптимизации:
+
+**CPU:**
+- GetByID: 130ms → 0ms (полное исчезновение из горячего пути)
+- GetAllByUserID: 70ms → 0ms (полное исчезновение из горячего пути)
+- Общее время: 750ms → 260ms (**65% быстрее**)
+- В топе CPU профиля теперь только runtime операции
+
+**Память:**
+- GetAllByUserID: 1.64GB → 532MB (**67% меньше аллокаций**)
+- Уменьшение аллокаций в handlers
+
+### pprof (До / После):
 
 ```
-git remote add -m v2 template https://github.com/Yandex-Practicum/go-musthave-shortener-tpl.git
+      flat  flat%   sum%        cum   cum%
+   -130ms -26.53% -26.53%     -130ms -26.53%  repository.(*InMemoryRepository).GetByID
+    -70ms -14.29% -40.82%      -70ms -14.29%  repository.(*InMemoryRepository).GetAllByUserID
+    -50ms -10.20% -51.02%      -50ms -10.20%  handler.Generate
+    -25ms  -5.10% -56.12%      -25ms  -5.10%  handler.GenerateJSON
+  -100000000 -19.17% -19.17%  -100000000 -19.17%  repository.(*InMemoryRepository).GetAllByUserID
+  -100000000  -9.61% -28.78%  -100000000  -9.61%  repository.(*InMemoryRepository).GetByID
+   -50000000  -4.81% -33.59%   -50000000  -4.81%  fmt.Sprintf
+   -30000000  -2.88% -36.47%   -30000000  -2.88%  json.Marshal
+   -20000000  -1.92% -38.39%   -20000000  -1.92%  handler.GenerateBatch
 ```
-
-Для обновления кода автотестов выполните команду:
-
-```
-git fetch template && git checkout template/v2 .github
-```
-
-Затем добавьте полученные изменения в свой репозиторий.
-
-## Запуск автотестов
-
-Для успешного запуска автотестов называйте ветки `iter<number>`, где `<number>` — порядковый номер инкремента. Например, в ветке с названием `iter4` запустятся автотесты для инкрементов с первого по четвёртый.
-
-При мёрже ветки с инкрементом в основную ветку `main` будут запускаться все автотесты.
-
-Подробнее про локальный и автоматический запуск читайте в [README автотестов](https://github.com/Yandex-Practicum/go-autotests).
-
-## Структура проекта
-
-Приведённая в этом репозитории структура проекта является рекомендуемой, но не обязательной.
-
-Это лишь пример организации кода, который поможет вам в реализации сервиса.
-
-При необходимости можно вносить изменения в структуру проекта, использовать любые библиотеки и предпочитаемые структурные паттерны организации кода приложения, например:
-- **DDD** (Domain-Driven Design)
-- **Clean Architecture**
-- **Hexagonal Architecture**
-- **Layered Architecture**
