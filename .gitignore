@@ -29,6 +29,7 @@ docker/volumes/*
 cover.html
 
 links.json
+config.json
 
 # TLS certificates
 certs/*.pem
