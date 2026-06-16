@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -50,8 +50,8 @@ func main() {
 
 	logger.Log.Info("Starting server at", zap.String("address", config.Cfg.ServerAddress))
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer stop()
 
 	var srv *http.Server
 	if config.Cfg.EnableHTTPS {
@@ -67,19 +67,19 @@ func main() {
 		} else {
 			err = srv.ListenAndServe()
 		}
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Log.Fatal("Server stopped with error", zap.Error(err))
 		}
 	}()
 
-	sig := <-quit
-	logger.Log.Info("Received signal, shutting down gracefully", zap.String("signal", sig.String()))
+	<-ctx.Done()
+	logger.Log.Info("Received signal, shutting down gracefully")
 
 	const shutdownTimeout = 30 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Log.Error("Server shutdown error", zap.Error(err))
 	}
 	logger.Log.Info("HTTP server stopped")

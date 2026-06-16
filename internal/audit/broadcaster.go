@@ -80,17 +80,15 @@ func (b *Broadcaster) Notify(event Event) {
 	}
 
 	for _, entry := range b.entries {
-		go func(e observerEntry) {
-			select {
-			case e.events <- event:
-			default:
-				b.logger.Warn("dropping audit event, observer buffer is full",
-					zap.String("action", event.Action),
-					zap.String("userID", event.UserID),
-					zap.String("url", event.URL),
-				)
-			}
-		}(entry)
+		select {
+		case entry.events <- event:
+		default:
+			b.logger.Warn("dropping audit event, observer buffer is full",
+				zap.String("action", event.Action),
+				zap.String("userID", event.UserID),
+				zap.String("url", event.URL),
+			)
+		}
 	}
 }
 
@@ -103,6 +101,7 @@ func (b *Broadcaster) Close() {
 
 	for _, entry := range entries {
 		close(entry.events)
+		entry.observer.Close()
 	}
 
 	b.wg.Wait()

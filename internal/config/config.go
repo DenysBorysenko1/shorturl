@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"flag"
 	"os"
+	"sync"
 
 	"github.com/caarlos0/env/v11"
 )
@@ -39,7 +40,10 @@ var (
 	configFile string
 )
 
-func init() {
+var registerOnce sync.Once
+
+func registerFlags() {
+	registerOnce.Do(func() {
 	flag.StringVar(&configFile, "config", "", "Path to JSON configuration file")
 	flag.StringVar(&configFile, "c", "", "Path to JSON configuration file (alias for -config)")
 	flag.StringVar(&Cfg.ServerAddress, "a", "localhost:8080", "HTTP server address")
@@ -53,6 +57,7 @@ func init() {
 	flag.BoolVar(&Cfg.EnableHTTPS, "s", false, "Enable HTTPS (true/false)")
 	flag.StringVar(&Cfg.TLSCertFile, "tls-cert", "", "Path to TLS certificate file")
 	flag.StringVar(&Cfg.TLSKeyFile, "k", "", "Path to TLS private key file")
+	})
 }
 
 func loadConfigFile(path string) (Config, error) {
@@ -66,6 +71,8 @@ func loadConfigFile(path string) (Config, error) {
 }
 
 func Load() {
+	registerFlags()
+
 	if !flag.Parsed() {
 		flag.Parse()
 	}
@@ -77,7 +84,9 @@ func Load() {
 
 	cfgPath := configFile
 	if cfgPath == "" {
-		cfgPath = os.Getenv("CONFIG")
+		if v, ok := os.LookupEnv("CONFIG"); ok {
+			cfgPath = v
+		}
 	}
 
 	var fileCfg Config
@@ -87,49 +96,54 @@ func Load() {
 		}
 	}
 
-	if !setFlags["a"] && os.Getenv("SERVER_ADDRESS") == "" && fileCfg.ServerAddress != "" {
+	if !setFlags["a"] && !envIsSet("SERVER_ADDRESS") && fileCfg.ServerAddress != "" {
 		Cfg.ServerAddress = fileCfg.ServerAddress
 	}
 
-	if !setFlags["b"] && os.Getenv("BASE_URL") == "" && fileCfg.BaseURL != "" {
+	if !setFlags["b"] && !envIsSet("BASE_URL") && fileCfg.BaseURL != "" {
 		Cfg.BaseURL = fileCfg.BaseURL
 	}
 
-	if !setFlags["f"] && os.Getenv("FILE_STORAGE_PATH") == "" && fileCfg.FileStorageURL != "" {
+	if !setFlags["f"] && !envIsSet("FILE_STORAGE_PATH") && fileCfg.FileStorageURL != "" {
 		Cfg.FileStorageURL = fileCfg.FileStorageURL
 	}
 
-	if !setFlags["d"] && os.Getenv("DATABASE_DSN") == "" && fileCfg.DatabaseDSN != "" {
+	if !setFlags["d"] && !envIsSet("DATABASE_DSN") && fileCfg.DatabaseDSN != "" {
 		Cfg.DatabaseDSN = fileCfg.DatabaseDSN
 	}
 
-	if !setFlags["j"] && os.Getenv("JWT_SECRET") == "" && fileCfg.JWTSecret != "" {
+	if !setFlags["j"] && !envIsSet("JWT_SECRET") && fileCfg.JWTSecret != "" {
 		Cfg.JWTSecret = fileCfg.JWTSecret
 	}
 
-	if !setFlags["e"] && os.Getenv("JWT_EXT") == "" && fileCfg.JWTExpiration != 0 {
+	if !setFlags["e"] && !envIsSet("JWT_EXT") && fileCfg.JWTExpiration != 0 {
 		Cfg.JWTExpiration = fileCfg.JWTExpiration
 	}
 
-	if !setFlags["audit-file"] && os.Getenv("AUDIT_FILE") == "" && fileCfg.AuditFile != "" {
+	if !setFlags["audit-file"] && !envIsSet("AUDIT_FILE") && fileCfg.AuditFile != "" {
 		Cfg.AuditFile = fileCfg.AuditFile
 	}
 
-	if !setFlags["audit-url"] && os.Getenv("AUDIT_URL") == "" && fileCfg.AuditURL != "" {
+	if !setFlags["audit-url"] && !envIsSet("AUDIT_URL") && fileCfg.AuditURL != "" {
 		Cfg.AuditURL = fileCfg.AuditURL
 	}
 
-	if !setFlags["s"] && os.Getenv("ENABLE_HTTPS") == "" && fileCfg.EnableHTTPS {
+	if !setFlags["s"] && !envIsSet("ENABLE_HTTPS") && fileCfg.EnableHTTPS {
 		Cfg.EnableHTTPS = fileCfg.EnableHTTPS
 	}
 
-	if !setFlags["tls-cert"] && os.Getenv("TLS_CERT_FILE") == "" && fileCfg.TLSCertFile != "" {
+	if !setFlags["tls-cert"] && !envIsSet("TLS_CERT_FILE") && fileCfg.TLSCertFile != "" {
 		Cfg.TLSCertFile = fileCfg.TLSCertFile
 	}
 
-	if !setFlags["k"] && os.Getenv("TLS_KEY_FILE") == "" && fileCfg.TLSKeyFile != "" {
+	if !setFlags["k"] && !envIsSet("TLS_KEY_FILE") && fileCfg.TLSKeyFile != "" {
 		Cfg.TLSKeyFile = fileCfg.TLSKeyFile
 	}
 
 	_ = env.Parse(&Cfg)
+}
+
+func envIsSet(key string) bool {
+	_, ok := os.LookupEnv(key)
+	return ok
 }
