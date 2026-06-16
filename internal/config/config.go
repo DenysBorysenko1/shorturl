@@ -44,19 +44,19 @@ var registerOnce sync.Once
 
 func registerFlags() {
 	registerOnce.Do(func() {
-	flag.StringVar(&configFile, "config", "", "Path to JSON configuration file")
-	flag.StringVar(&configFile, "c", "", "Path to JSON configuration file (alias for -config)")
-	flag.StringVar(&Cfg.ServerAddress, "a", "localhost:8080", "HTTP server address")
-	flag.StringVar(&Cfg.BaseURL, "b", "http://localhost:8080", "Base URL for shortened links")
-	flag.StringVar(&Cfg.FileStorageURL, "f", "", "Path to data file")
-	flag.StringVar(&Cfg.DatabaseDSN, "d", "", "Database connection path")
-	flag.StringVar(&Cfg.JWTSecret, "j", "", "JWT secret")
-	flag.IntVar(&Cfg.JWTExpiration, "e", 0, "JWT lifetime in seconds")
-	flag.StringVar(&Cfg.AuditFile, "audit-file", "", "Path to audit log file")
-	flag.StringVar(&Cfg.AuditURL, "audit-url", "", "URL of remote audit server")
-	flag.BoolVar(&Cfg.EnableHTTPS, "s", false, "Enable HTTPS (true/false)")
-	flag.StringVar(&Cfg.TLSCertFile, "tls-cert", "", "Path to TLS certificate file")
-	flag.StringVar(&Cfg.TLSKeyFile, "k", "", "Path to TLS private key file")
+		flag.StringVar(&configFile, "config", "", "Path to JSON configuration file")
+		flag.StringVar(&configFile, "c", "", "Path to JSON configuration file (alias for -config)")
+		flag.StringVar(&Cfg.ServerAddress, "a", "localhost:8080", "HTTP server address")
+		flag.StringVar(&Cfg.BaseURL, "b", "http://localhost:8080", "Base URL for shortened links")
+		flag.StringVar(&Cfg.FileStorageURL, "f", "", "Path to data file")
+		flag.StringVar(&Cfg.DatabaseDSN, "d", "", "Database connection path")
+		flag.StringVar(&Cfg.JWTSecret, "j", "", "JWT secret")
+		flag.IntVar(&Cfg.JWTExpiration, "e", 0, "JWT lifetime in seconds")
+		flag.StringVar(&Cfg.AuditFile, "audit-file", "", "Path to audit log file")
+		flag.StringVar(&Cfg.AuditURL, "audit-url", "", "URL of remote audit server")
+		flag.BoolVar(&Cfg.EnableHTTPS, "s", false, "Enable HTTPS (true/false)")
+		flag.StringVar(&Cfg.TLSCertFile, "tls-cert", "", "Path to TLS certificate file")
+		flag.StringVar(&Cfg.TLSKeyFile, "k", "", "Path to TLS private key file")
 	})
 }
 
