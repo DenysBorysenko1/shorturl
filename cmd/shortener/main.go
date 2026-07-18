@@ -42,11 +42,11 @@ func main() {
 	config.Load()
 	logger.Initialize(config.Cfg.LogLevel)
 
-	linkRepository := initializeLinkRepository(*logger.Log)
+	linkRepository, statsProvider := initializeLinkRepository(*logger.Log)
 	linkService := service.NewLinkService(linkRepository, *logger.Log)
 
 	broadcaster := initializeAuditBroadcaster(*logger.Log)
-	router := newRouter(linkService, config.Cfg, broadcaster)
+	router := newRouter(linkService, statsProvider, config.Cfg, broadcaster)
 
 	logger.Log.Info("Starting server at", zap.String("address", config.Cfg.ServerAddress))
 
@@ -125,7 +125,7 @@ func createHTTPSServer(router chi.Router) *http.Server {
 	}
 }
 
-func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Link] {
+func initializeLinkRepository(logger zap.Logger) (repository.Repository[model.Link], repository.StatsProvider) {
 	if config.Cfg.DatabaseDSN != "" {
 		db, err := sql.Open("pgx", config.Cfg.DatabaseDSN)
 		if err != nil {
@@ -142,7 +142,8 @@ func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Lin
 		logger.Info("While initialize link repository POSTGRES source had chosen")
 
 		sqlxDB := sqlx.NewDb(db, "pgx")
-		return repository.NewPostgresRepository[model.Link](sqlxDB)
+		repo := repository.NewPostgresRepository[model.Link](sqlxDB)
+		return repo, repo
 	}
 
 	if config.Cfg.FileStorageURL != "" {
@@ -151,11 +152,12 @@ func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Lin
 			logger.Error("Failed to init file repository: %v", zap.Error(err))
 		}
 		logger.Info("While initialize link repository FILE source had chosen")
-		return repository
+		return repository, repository
 	}
 
 	logger.Info("While initialize link repository IN MEMORY source had chosen")
-	return repository.NewInMemoryRepository[model.Link]()
+	repo := repository.NewInMemoryRepository[model.Link]()
+	return repo, repo
 }
 
 func initializeAuditBroadcaster(logger zap.Logger) *audit.Broadcaster {
@@ -184,7 +186,7 @@ func initializeAuditBroadcaster(logger zap.Logger) *audit.Broadcaster {
 	return broadcaster
 }
 
-func newRouter(linkService service.LinkServiceInterface, cfg config.Config, broadcaster *audit.Broadcaster) chi.Router {
+func newRouter(linkService service.LinkServiceInterface, statsProvider repository.StatsProvider, cfg config.Config, broadcaster *audit.Broadcaster) chi.Router {
 	router := chi.NewRouter()
 
 	router.Use(logger.WithLogging)
@@ -201,6 +203,8 @@ func newRouter(linkService service.LinkServiceInterface, cfg config.Config, broa
 	router.Get("/api/user/urls", handler.ListUrls(linkService, logger.Log, cfg))
 
 	router.Delete("/api/user/urls", handler.RemoveListUrls(linkService, logger.Log, cfg))
+
+	router.Get("/api/internal/stats", handler.InternalStats(statsProvider, cfg))
 
 	return router
 }

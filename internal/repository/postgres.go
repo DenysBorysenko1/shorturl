@@ -96,6 +96,18 @@ func (r *PostgresRepository) GetAllByUserID(userID string) ([]model.Link, error)
 	return links, nil
 }
 
+func (r *PostgresRepository) CountURLs() (int, error) {
+	var count int
+	err := r.db.Get(&count, "SELECT COUNT(*) FROM links")
+	return count, err
+}
+
+func (r *PostgresRepository) CountUsers() (int, error) {
+	var count int
+	err := r.db.Get(&count, "SELECT COUNT(DISTINCT created_by) FROM links")
+	return count, err
+}
+
 func (r *PostgresRepository) SoftDeleteByIDs(ids []string, userID string) error {
 	_, err := r.db.Exec(
 		`UPDATE links

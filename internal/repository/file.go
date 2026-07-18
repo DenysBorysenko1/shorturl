@@ -142,6 +142,26 @@ func (r *FileRepository) GetAllByUserID(userID string) ([]model.Link, error) {
 	return result, nil
 }
 
+func (r *FileRepository) CountURLs() (int, error) {
+	items, err := r.loadAll()
+	if err != nil {
+		return 0, err
+	}
+	return len(items), nil
+}
+
+func (r *FileRepository) CountUsers() (int, error) {
+	items, err := r.loadAll()
+	if err != nil {
+		return 0, err
+	}
+	users := make(map[string]struct{})
+	for _, item := range items {
+		users[item.CreatedBy] = struct{}{}
+	}
+	return len(users), nil
+}
+
 func (r *FileRepository) SoftDeleteByIDs(ids []string, userID string) error {
 	items, err := r.loadAll()
 	if err != nil {
