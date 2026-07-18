@@ -48,6 +48,8 @@ type LinkService struct {
 
 	deleteOnce sync.Once
 	deleteCh   chan deleteJob
+	stopCh     chan struct{}
+	doneCh     chan struct{}
 }
 
 var (
@@ -88,6 +90,8 @@ func NewLinkService(repository repository.Repository[model.Link], logger zap.Log
 		repository: repository,
 		logger:     logger,
 		deleteCh:   make(chan deleteJob, 1024),
+		stopCh:     make(chan struct{}),
+		doneCh:     make(chan struct{}),
 	}
 	svc.startDeleteWorker()
 	return svc
@@ -270,6 +274,8 @@ func (linkService *LinkService) flush(buf map[string][]string) {
 }
 
 func (linkService *LinkService) deleteWorker() {
+	defer close(linkService.doneCh)
+
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
@@ -277,7 +283,11 @@ func (linkService *LinkService) deleteWorker() {
 
 	for {
 		select {
-		case job := <-linkService.deleteCh:
+		case job, ok := <-linkService.deleteCh:
+			if !ok {
+				linkService.flush(buf)
+				return
+			}
 			if len(job.ids) == 0 || job.userID == "" {
 				continue
 			}
@@ -286,6 +296,29 @@ func (linkService *LinkService) deleteWorker() {
 		case <-ticker.C:
 			linkService.flush(buf)
 			buf = make(map[string][]string)
+
+		case <-linkService.stopCh:
+			for {
+				select {
+				case job, ok := <-linkService.deleteCh:
+					if !ok {
+						linkService.flush(buf)
+						return
+					}
+					if len(job.ids) == 0 || job.userID == "" {
+						continue
+					}
+					buf[job.userID] = append(buf[job.userID], job.ids...)
+				default:
+					linkService.flush(buf)
+					return
+				}
+			}
 		}
 	}
+}
+
+func (linkService *LinkService) Close() {
+	close(linkService.stopCh)
+	<-linkService.doneCh
 }

@@ -21,6 +21,8 @@ type Broadcaster struct {
 	entries []observerEntry
 	logger  *zap.Logger
 	mu      sync.RWMutex
+	closed  bool
+	wg      sync.WaitGroup
 }
 
 func NewBroadcaster(logger *zap.Logger) *Broadcaster {
@@ -38,10 +40,12 @@ func (b *Broadcaster) Attach(observer Observer) {
 	entry := observerEntry{observer: observer, events: events}
 	b.entries = append(b.entries, entry)
 
+	b.wg.Add(1)
 	go b.runObserverWorker(entry)
 }
 
 func (b *Broadcaster) runObserverWorker(entry observerEntry) {
+	defer b.wg.Done()
 	for event := range entry.events {
 		if err := entry.observer.LogEvent(event); err != nil {
 			b.logger.Error("observer failed to log event",
@@ -71,17 +75,38 @@ func (b *Broadcaster) Notify(event Event) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	for _, entry := range b.entries {
-		go func(e observerEntry) {
-			select {
-			case e.events <- event:
-			default:
-				b.logger.Warn("dropping audit event, observer buffer is full",
-					zap.String("action", event.Action),
-					zap.String("userID", event.UserID),
-					zap.String("url", event.URL),
-				)
-			}
-		}(entry)
+	if b.closed {
+		return
 	}
+
+	for _, entry := range b.entries {
+		select {
+		case entry.events <- event:
+		default:
+			b.logger.Warn("dropping audit event, observer buffer is full",
+				zap.String("action", event.Action),
+				zap.String("userID", event.UserID),
+				zap.String("url", event.URL),
+			)
+		}
+	}
+}
+
+func (b *Broadcaster) Close() {
+	b.mu.Lock()
+	b.closed = true
+	entries := make([]observerEntry, len(b.entries))
+	copy(entries, b.entries)
+	b.mu.Unlock()
+
+	for _, entry := range entries {
+		close(entry.events)
+		entry.observer.Close()
+	}
+
+	b.wg.Wait()
+
+	b.mu.Lock()
+	b.entries = nil
+	b.mu.Unlock()
 }

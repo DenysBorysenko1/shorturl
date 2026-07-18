@@ -151,7 +151,8 @@ func (c *ConcurrentHTTPObserver) LogEvent(event Event) error {
 	}
 }
 
-func (c *ConcurrentHTTPObserver) Wait() {
+func (c *ConcurrentHTTPObserver) Close() error {
 	close(c.shutdown)
 	c.wg.Wait()
+	return nil
 }

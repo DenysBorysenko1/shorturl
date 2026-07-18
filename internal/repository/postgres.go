@@ -16,6 +16,10 @@ func NewPostgresRepository[T Entity](db *sqlx.DB) *PostgresRepository {
 	}
 }
 
+func (r *PostgresRepository) Close() error {
+	return r.db.Close()
+}
+
 func (r *PostgresRepository) Create(entity model.Link) error {
 	_, err := r.db.Exec("INSERT INTO links (id, url, created_by) VALUES ($1, $2, $3)", entity.ID, entity.URL, entity.CreatedBy)
 	if err != nil {
