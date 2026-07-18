@@ -22,6 +22,7 @@ import (
 
 type Config struct {
 	ServerAddress  string `env:"SERVER_ADDRESS"    json:"server_address"`
+	GRPCAddress    string `env:"GRPC_ADDRESS"      json:"grpc_address"`
 	BaseURL        string `env:"BASE_URL"          json:"base_url"`
 	FileStorageURL string `env:"FILE_STORAGE_PATH" json:"file_storage_path"`
 	DatabaseDSN    string `env:"DATABASE_DSN"      json:"database_dsn"`
@@ -48,6 +49,7 @@ func registerFlags() {
 		flag.StringVar(&configFile, "config", "", "Path to JSON configuration file")
 		flag.StringVar(&configFile, "c", "", "Path to JSON configuration file (alias for -config)")
 		flag.StringVar(&Cfg.ServerAddress, "a", "localhost:8080", "HTTP server address")
+		flag.StringVar(&Cfg.GRPCAddress, "ga", "localhost:50051", "gRPC server address")
 		flag.StringVar(&Cfg.BaseURL, "b", "http://localhost:8080", "Base URL for shortened links")
 		flag.StringVar(&Cfg.FileStorageURL, "f", "", "Path to data file")
 		flag.StringVar(&Cfg.DatabaseDSN, "d", "", "Database connection path")
@@ -100,6 +102,10 @@ func Load() {
 
 	if !setFlags["a"] && !envIsSet("SERVER_ADDRESS") && fileCfg.ServerAddress != "" {
 		Cfg.ServerAddress = fileCfg.ServerAddress
+	}
+
+	if !setFlags["ga"] && !envIsSet("GRPC_ADDRESS") && fileCfg.GRPCAddress != "" {
+		Cfg.GRPCAddress = fileCfg.GRPCAddress
 	}
 
 	if !setFlags["b"] && !envIsSet("BASE_URL") && fileCfg.BaseURL != "" {
