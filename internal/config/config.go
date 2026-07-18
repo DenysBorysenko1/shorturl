@@ -33,6 +33,7 @@ type Config struct {
 	EnableHTTPS    bool   `env:"ENABLE_HTTPS"      json:"enable_https"`
 	TLSCertFile    string `env:"TLS_CERT_FILE"     json:"tls_cert_file"    envDefault:"certs/cert.pem"`
 	TLSKeyFile     string `env:"TLS_KEY_FILE"      json:"tls_key_file"     envDefault:"certs/key.pem"`
+	TrustedSubnet  string `env:"TRUSTED_SUBNET"    json:"trusted_subnet"`
 }
 
 var (
@@ -57,6 +58,7 @@ func registerFlags() {
 		flag.BoolVar(&Cfg.EnableHTTPS, "s", false, "Enable HTTPS (true/false)")
 		flag.StringVar(&Cfg.TLSCertFile, "tls-cert", "", "Path to TLS certificate file")
 		flag.StringVar(&Cfg.TLSKeyFile, "k", "", "Path to TLS private key file")
+		flag.StringVar(&Cfg.TrustedSubnet, "t", "", "Trusted subnet in CIDR notation")
 	})
 }
 
@@ -138,6 +140,10 @@ func Load() {
 
 	if !setFlags["k"] && !envIsSet("TLS_KEY_FILE") && fileCfg.TLSKeyFile != "" {
 		Cfg.TLSKeyFile = fileCfg.TLSKeyFile
+	}
+
+	if !setFlags["t"] && !envIsSet("TRUSTED_SUBNET") && fileCfg.TrustedSubnet != "" {
+		Cfg.TrustedSubnet = fileCfg.TrustedSubnet
 	}
 
 	_ = env.Parse(&Cfg)
