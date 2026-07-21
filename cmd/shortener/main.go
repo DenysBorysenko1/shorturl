@@ -46,11 +46,11 @@ func main() {
 	config.Load()
 	logger.Initialize(config.Cfg.LogLevel)
 
-	linkRepository, statsProvider := initializeLinkRepository(*logger.Log)
+	linkRepository := initializeLinkRepository(*logger.Log)
 	linkService := service.NewLinkService(linkRepository, *logger.Log)
 
 	broadcaster := initializeAuditBroadcaster(*logger.Log)
-	router := newRouter(linkService, statsProvider, config.Cfg, broadcaster)
+	router := newRouter(linkService, linkRepository, config.Cfg, broadcaster)
 
 	logger.Log.Info("Starting HTTP server at", zap.String("address", config.Cfg.ServerAddress))
 
@@ -153,7 +153,7 @@ func createHTTPSServer(router chi.Router) *http.Server {
 	}
 }
 
-func initializeLinkRepository(logger zap.Logger) (repository.Repository[model.Link], repository.StatsProvider) {
+func initializeLinkRepository(logger zap.Logger) repository.LinkRepository {
 	if config.Cfg.DatabaseDSN != "" {
 		db, err := sql.Open("pgx", config.Cfg.DatabaseDSN)
 		if err != nil {
@@ -170,22 +170,20 @@ func initializeLinkRepository(logger zap.Logger) (repository.Repository[model.Li
 		logger.Info("While initialize link repository POSTGRES source had chosen")
 
 		sqlxDB := sqlx.NewDb(db, "pgx")
-		repo := repository.NewPostgresRepository[model.Link](sqlxDB)
-		return repo, repo
+		return repository.NewPostgresRepository[model.Link](sqlxDB)
 	}
 
 	if config.Cfg.FileStorageURL != "" {
-		repository, err := repository.NewFileRepository[model.Link](config.Cfg.FileStorageURL)
+		repo, err := repository.NewFileRepository[model.Link](config.Cfg.FileStorageURL)
 		if err != nil {
-			logger.Error("Failed to init file repository: %v", zap.Error(err))
+			logger.Fatal("Failed to init file repository", zap.Error(err))
 		}
 		logger.Info("While initialize link repository FILE source had chosen")
-		return repository, repository
+		return repo
 	}
 
 	logger.Info("While initialize link repository IN MEMORY source had chosen")
-	repo := repository.NewInMemoryRepository[model.Link]()
-	return repo, repo
+	return repository.NewInMemoryRepository[model.Link]()
 }
 
 func initializeAuditBroadcaster(logger zap.Logger) *audit.Broadcaster {
@@ -214,7 +212,7 @@ func initializeAuditBroadcaster(logger zap.Logger) *audit.Broadcaster {
 	return broadcaster
 }
 
-func newRouter(linkService service.LinkServiceInterface, statsProvider repository.StatsProvider, cfg config.Config, broadcaster *audit.Broadcaster) chi.Router {
+func newRouter(linkService service.LinkServiceInterface, statsProvider repository.LinkRepository, cfg config.Config, broadcaster *audit.Broadcaster) chi.Router {
 	router := chi.NewRouter()
 
 	router.Use(logger.WithLogging)

@@ -3,6 +3,8 @@
 // It supports CRUD operations with user-specific queries and soft delete.
 package repository
 
+import "shorturl/internal/model"
+
 // Entity defines the interface for entities that can be stored in a repository.
 //
 // Any entity stored in a repository must implement this interface to provide
@@ -31,4 +33,12 @@ type Repository[T Entity] interface {
 	// SoftDeleteByIDs marks multiple entities as deleted without removing them from storage.
 	// Only entities belonging to the specified user will be affected.
 	SoftDeleteByIDs(ids []string, userID string) error
+}
+
+// LinkRepository unifies Repository[model.Link] and StatsProvider
+// so that a single concrete implementation can be passed around
+// without returning multiple values from a factory function.
+type LinkRepository interface {
+	Repository[model.Link]
+	StatsProvider
 }

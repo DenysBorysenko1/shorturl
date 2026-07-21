@@ -57,6 +57,8 @@ func InternalStats(statsProvider repository.StatsProvider, cfg config.Config) ht
 			Users: users,
 		}
 
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	}
 }
