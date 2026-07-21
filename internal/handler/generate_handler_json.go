@@ -82,7 +82,9 @@ func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config c
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 
-			_ = json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			if encErr := json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()}); encErr != nil {
+				logger.Error("failed to encode error response", zap.Error(encErr))
+			}
 			return
 		}
 
@@ -90,7 +92,9 @@ func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config c
 		if url == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "URL is required"})
+			if encErr := json.NewEncoder(w).Encode(ErrorResponse{Error: "URL is required"}); encErr != nil {
+				logger.Error("failed to encode error response", zap.Error(encErr))
+			}
 
 			return
 		}
@@ -101,9 +105,11 @@ func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config c
 			if errors.As(err, &conflictErr) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusConflict)
-				_ = json.NewEncoder(w).Encode(Response{
+				if encErr := json.NewEncoder(w).Encode(Response{
 					Result: config.BaseURL + "/" + conflictErr.ID,
-				})
+				}); encErr != nil {
+					logger.Error("failed to encode conflict response", zap.Error(encErr))
+				}
 				broadcaster.Notify(audit.Event{
 					TS:     time.Now().Unix(),
 					Action: "shorten",
@@ -115,7 +121,9 @@ func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config c
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Error while creating"})
+			if encErr := json.NewEncoder(w).Encode(ErrorResponse{Error: "Error while creating"}); encErr != nil {
+				logger.Error("failed to encode error response", zap.Error(encErr))
+			}
 			return
 		}
 
@@ -131,7 +139,9 @@ func GenerateJSON(svc service.LinkServiceInterface, logger *zap.Logger, config c
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		w.Write(resp)
+		if _, writeErr := w.Write(resp); writeErr != nil {
+			logger.Error("failed to write response", zap.Error(writeErr))
+		}
 
 		broadcaster.Notify(audit.Event{
 			TS:     time.Now().Unix(),

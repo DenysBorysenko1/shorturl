@@ -77,14 +77,18 @@ func GenerateBatch(svc service.LinkServiceInterface, logger *zap.Logger, config 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 
-			_ = json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			if encErr := json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()}); encErr != nil {
+				logger.Error("failed to encode error response", zap.Error(encErr))
+			}
 			return
 		}
 
 		if len(inputItems) == 0 {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Empty data"})
+			if encErr := json.NewEncoder(w).Encode(ErrorResponse{Error: "Empty data"}); encErr != nil {
+				logger.Error("failed to encode error response", zap.Error(encErr))
+			}
 
 			return
 		}
@@ -104,7 +108,9 @@ func GenerateBatch(svc service.LinkServiceInterface, logger *zap.Logger, config 
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Error while creating"})
+			if encErr := json.NewEncoder(w).Encode(ErrorResponse{Error: "Error while creating"}); encErr != nil {
+				logger.Error("failed to encode error response", zap.Error(encErr))
+			}
 			return
 		}
 
@@ -125,6 +131,8 @@ func GenerateBatch(svc service.LinkServiceInterface, logger *zap.Logger, config 
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		w.Write(resp)
+		if _, writeErr := w.Write(resp); writeErr != nil {
+			logger.Error("failed to write response", zap.Error(writeErr))
+		}
 	}
 }

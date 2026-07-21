@@ -52,7 +52,9 @@ func RemoveListUrls(linkService service.LinkServiceInterface, logger *zap.Logger
 		if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			if encErr := json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()}); encErr != nil {
+				logger.Error("failed to encode error response", zap.Error(encErr))
+			}
 			return
 		}
 

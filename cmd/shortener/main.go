@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -14,16 +15,19 @@ import (
 	"shorturl/internal/audit"
 	"shorturl/internal/config"
 	dbpkg "shorturl/internal/db"
+	grpcserver "shorturl/internal/grpc"
 	"shorturl/internal/handler"
 	"shorturl/internal/logger"
 	"shorturl/internal/middleware"
 	"shorturl/internal/model"
 	"shorturl/internal/repository"
 	"shorturl/internal/service"
+	pb "shorturl/proto"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	_ "github.com/jackc/pgx/v5"
 )
@@ -46,9 +50,9 @@ func main() {
 	linkService := service.NewLinkService(linkRepository, *logger.Log)
 
 	broadcaster := initializeAuditBroadcaster(*logger.Log)
-	router := newRouter(linkService, config.Cfg, broadcaster)
+	router := newRouter(linkService, linkRepository, config.Cfg, broadcaster)
 
-	logger.Log.Info("Starting server at", zap.String("address", config.Cfg.ServerAddress))
+	logger.Log.Info("Starting HTTP server at", zap.String("address", config.Cfg.ServerAddress))
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer stop()
@@ -68,9 +72,28 @@ func main() {
 			err = srv.ListenAndServe()
 		}
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Fatal("Server stopped with error", zap.Error(err))
+			logger.Log.Fatal("HTTP server stopped with error", zap.Error(err))
 		}
 	}()
+
+	// gRPC server
+	var grpcSrv *grpc.Server
+	if config.Cfg.GRPCAddress != "" {
+		grpcSrv = grpc.NewServer(grpc.UnaryInterceptor(grpcserver.AuthInterceptor()))
+		grpcSvc := grpcserver.NewServer(linkService, config.Cfg, logger.Log)
+		pb.RegisterShortenerServiceServer(grpcSrv, grpcSvc)
+
+		go func() {
+			grpcListener, netErr := net.Listen("tcp", config.Cfg.GRPCAddress)
+			if netErr != nil {
+				logger.Log.Fatal("Failed to listen gRPC", zap.Error(netErr))
+			}
+			logger.Log.Info("Starting gRPC server at", zap.String("address", config.Cfg.GRPCAddress))
+			if err := grpcSrv.Serve(grpcListener); err != nil {
+				logger.Log.Fatal("gRPC server stopped with error", zap.Error(err))
+			}
+		}()
+	}
 
 	<-ctx.Done()
 	logger.Log.Info("Received signal, shutting down gracefully")
@@ -79,8 +102,13 @@ func main() {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
+	if grpcSrv != nil {
+		grpcSrv.GracefulStop()
+		logger.Log.Info("gRPC server stopped")
+	}
+
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Log.Error("Server shutdown error", zap.Error(err))
+		logger.Log.Error("HTTP server shutdown error", zap.Error(err))
 	}
 	logger.Log.Info("HTTP server stopped")
 
@@ -125,7 +153,7 @@ func createHTTPSServer(router chi.Router) *http.Server {
 	}
 }
 
-func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Link] {
+func initializeLinkRepository(logger zap.Logger) repository.LinkRepository {
 	if config.Cfg.DatabaseDSN != "" {
 		db, err := sql.Open("pgx", config.Cfg.DatabaseDSN)
 		if err != nil {
@@ -146,12 +174,12 @@ func initializeLinkRepository(logger zap.Logger) repository.Repository[model.Lin
 	}
 
 	if config.Cfg.FileStorageURL != "" {
-		repository, err := repository.NewFileRepository[model.Link](config.Cfg.FileStorageURL)
+		repo, err := repository.NewFileRepository[model.Link](config.Cfg.FileStorageURL)
 		if err != nil {
-			logger.Error("Failed to init file repository: %v", zap.Error(err))
+			logger.Fatal("Failed to init file repository", zap.Error(err))
 		}
 		logger.Info("While initialize link repository FILE source had chosen")
-		return repository
+		return repo
 	}
 
 	logger.Info("While initialize link repository IN MEMORY source had chosen")
@@ -184,7 +212,7 @@ func initializeAuditBroadcaster(logger zap.Logger) *audit.Broadcaster {
 	return broadcaster
 }
 
-func newRouter(linkService service.LinkServiceInterface, cfg config.Config, broadcaster *audit.Broadcaster) chi.Router {
+func newRouter(linkService service.LinkServiceInterface, statsProvider repository.LinkRepository, cfg config.Config, broadcaster *audit.Broadcaster) chi.Router {
 	router := chi.NewRouter()
 
 	router.Use(logger.WithLogging)
@@ -201,6 +229,8 @@ func newRouter(linkService service.LinkServiceInterface, cfg config.Config, broa
 	router.Get("/api/user/urls", handler.ListUrls(linkService, logger.Log, cfg))
 
 	router.Delete("/api/user/urls", handler.RemoveListUrls(linkService, logger.Log, cfg))
+
+	router.Get("/api/internal/stats", handler.InternalStats(statsProvider, cfg))
 
 	return router
 }

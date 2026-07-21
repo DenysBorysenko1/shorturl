@@ -22,6 +22,7 @@ import (
 
 type Config struct {
 	ServerAddress  string `env:"SERVER_ADDRESS"    json:"server_address"`
+	GRPCAddress    string `env:"GRPC_ADDRESS"      json:"grpc_address"`
 	BaseURL        string `env:"BASE_URL"          json:"base_url"`
 	FileStorageURL string `env:"FILE_STORAGE_PATH" json:"file_storage_path"`
 	DatabaseDSN    string `env:"DATABASE_DSN"      json:"database_dsn"`
@@ -33,6 +34,7 @@ type Config struct {
 	EnableHTTPS    bool   `env:"ENABLE_HTTPS"      json:"enable_https"`
 	TLSCertFile    string `env:"TLS_CERT_FILE"     json:"tls_cert_file"    envDefault:"certs/cert.pem"`
 	TLSKeyFile     string `env:"TLS_KEY_FILE"      json:"tls_key_file"     envDefault:"certs/key.pem"`
+	TrustedSubnet  string `env:"TRUSTED_SUBNET"    json:"trusted_subnet"`
 }
 
 var (
@@ -47,6 +49,7 @@ func registerFlags() {
 		flag.StringVar(&configFile, "config", "", "Path to JSON configuration file")
 		flag.StringVar(&configFile, "c", "", "Path to JSON configuration file (alias for -config)")
 		flag.StringVar(&Cfg.ServerAddress, "a", "localhost:8080", "HTTP server address")
+		flag.StringVar(&Cfg.GRPCAddress, "ga", "localhost:50051", "gRPC server address")
 		flag.StringVar(&Cfg.BaseURL, "b", "http://localhost:8080", "Base URL for shortened links")
 		flag.StringVar(&Cfg.FileStorageURL, "f", "", "Path to data file")
 		flag.StringVar(&Cfg.DatabaseDSN, "d", "", "Database connection path")
@@ -57,6 +60,7 @@ func registerFlags() {
 		flag.BoolVar(&Cfg.EnableHTTPS, "s", false, "Enable HTTPS (true/false)")
 		flag.StringVar(&Cfg.TLSCertFile, "tls-cert", "", "Path to TLS certificate file")
 		flag.StringVar(&Cfg.TLSKeyFile, "k", "", "Path to TLS private key file")
+		flag.StringVar(&Cfg.TrustedSubnet, "t", "", "Trusted subnet in CIDR notation")
 	})
 }
 
@@ -100,6 +104,10 @@ func Load() {
 		Cfg.ServerAddress = fileCfg.ServerAddress
 	}
 
+	if !setFlags["ga"] && !envIsSet("GRPC_ADDRESS") && fileCfg.GRPCAddress != "" {
+		Cfg.GRPCAddress = fileCfg.GRPCAddress
+	}
+
 	if !setFlags["b"] && !envIsSet("BASE_URL") && fileCfg.BaseURL != "" {
 		Cfg.BaseURL = fileCfg.BaseURL
 	}
@@ -138,6 +146,10 @@ func Load() {
 
 	if !setFlags["k"] && !envIsSet("TLS_KEY_FILE") && fileCfg.TLSKeyFile != "" {
 		Cfg.TLSKeyFile = fileCfg.TLSKeyFile
+	}
+
+	if !setFlags["t"] && !envIsSet("TRUSTED_SUBNET") && fileCfg.TrustedSubnet != "" {
+		Cfg.TrustedSubnet = fileCfg.TrustedSubnet
 	}
 
 	_ = env.Parse(&Cfg)

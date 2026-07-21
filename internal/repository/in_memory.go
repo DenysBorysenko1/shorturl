@@ -96,6 +96,18 @@ func (repository *InMemoryRepository) GetAllByUserID(userID string) ([]model.Lin
 	return result, nil
 }
 
+func (repository *InMemoryRepository) CountURLs() (int, error) {
+	repository.mu.RLock()
+	defer repository.mu.RUnlock()
+	return len(repository.data), nil
+}
+
+func (repository *InMemoryRepository) CountUsers() (int, error) {
+	repository.mu.RLock()
+	defer repository.mu.RUnlock()
+	return len(repository.userIndex), nil
+}
+
 func (repository *InMemoryRepository) SoftDeleteByIDs(ids []string, userID string) error {
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
